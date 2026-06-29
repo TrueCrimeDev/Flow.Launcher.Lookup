@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.0" />
+  </ItemGroup>
+
+  <!-- The core (models + services) has no WPF / SDK dependency, so we compile those
+       source files directly into the test assembly. This avoids referencing the
+       WPF-coupled plugin assembly from the test host and keeps tests fully offline. -->
+  <ItemGroup>
+    <Compile Include="..\Lookup\Models\LookupItem.cs" Link="src\LookupItem.cs" />
+    <Compile Include="..\Lookup\Models\LookupDataset.cs" Link="src\LookupDataset.cs" />
+    <Compile Include="..\Lookup\Models\SearchRecord.cs" Link="src\SearchRecord.cs" />
+    <Compile Include="..\Lookup\Services\TextUtils.cs" Link="src\TextUtils.cs" />
+    <Compile Include="..\Lookup\Services\Scorer.cs" Link="src\Scorer.cs" />
+    <Compile Include="..\Lookup\Services\SearchIndex.cs" Link="src\SearchIndex.cs" />
+    <Compile Include="..\Lookup\Services\DataLoader.cs" Link="src\DataLoader.cs" />
+    <Compile Include="..\Lookup\Services\PluginConfig.cs" Link="src\PluginConfig.cs" />
+  </ItemGroup>
+
+</Project>

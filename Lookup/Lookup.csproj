@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Lookup</RootNamespace>
+    <AssemblyName>Lookup</AssemblyName>
+    <Version>1.0.0</Version>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Flow.Launcher.Plugin exposes WPF types (e.g. ImageSource on Result), so WPF
+         references are required to compile against the SDK. -->
+    <UseWPF>true</UseWPF>
+
+    <!-- Plugins are loaded dynamically by Flow; this produces a proper deps.json. -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- Keep the output folder flat (plugin.json + Lookup.dll at the root). -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ExcludeAssets="runtime": the host already loads Flow.Launcher.Plugin.dll, so the
+         plugin must NOT ship its own copy (identical types must come from one assembly). -->
+    <PackageReference Include="Flow.Launcher.Plugin" Version="5.3.0" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Images\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="data\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,12 @@
+{
+  "ID": "5E87D393442B4F36822AF344B7BC3C60",
+  "ActionKeyword": "lu",
+  "Name": "Lookup",
+  "Description": "Fuzzy-search local JSON lookup datasets (NAICS codes and more) from Flow Launcher.",
+  "Author": "TrueCrimeDev",
+  "Version": "1.0.0",
+  "Language": "csharp",
+  "Website": "https://github.com/TrueCrimeDev/Flow.Launcher.Lookup",
+  "ExecuteFileName": "Lookup.dll",
+  "IcoPath": "Images\\icon.png"
+}

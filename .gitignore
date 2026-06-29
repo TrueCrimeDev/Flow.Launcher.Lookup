@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+
+# IDE / user files
+.vs/
+*.user
+*.suo
+
+# Logs captured during local testing
+logs/

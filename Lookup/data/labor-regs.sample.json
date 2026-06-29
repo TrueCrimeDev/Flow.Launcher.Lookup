@@ -1,0 +1,276 @@
+{
+  "dataset": "labor-law",
+  "version": "2024",
+  "items": [
+    {
+      "code": "29 USC 203",
+      "title": "FLSA Definitions",
+      "description": "Section 3 of the Fair Labor Standards Act — defines employee, employer, enterprise, employ, and other key terms.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["definitions", "employee", "employer", "enterprise", "employ", "flsa section 3"],
+      "aliases": ["FLSA 3", "section 3"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/203"
+    },
+    {
+      "code": "29 USC 206",
+      "title": "Minimum Wage",
+      "description": "Section 6 of the FLSA — establishes the federal minimum wage; subsection (d) is the Equal Pay Act.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["minimum wage", "wages", "pay", "equal pay act", "wage discrimination", "flsa section 6"],
+      "aliases": ["FLSA 6", "min wage"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/206"
+    },
+    {
+      "code": "29 USC 207",
+      "title": "Maximum Hours and Overtime",
+      "description": "Section 7 of the FLSA — requires overtime pay at 1.5x the regular rate over 40 hours; includes the 7(i) retail/commission exemption.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["overtime", "time and a half", "40 hours", "regular rate", "maximum hours", "flsa section 7"],
+      "aliases": ["FLSA 7", "OT"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/207"
+    },
+    {
+      "code": "29 USC 211",
+      "title": "Recordkeeping and Investigations",
+      "description": "Section 11 of the FLSA — authority to investigate and the employer duty to keep records.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["recordkeeping", "records", "investigation", "inspection", "flsa section 11"],
+      "aliases": ["FLSA 11"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/211"
+    },
+    {
+      "code": "29 USC 212",
+      "title": "Child Labor Provisions",
+      "description": "Section 12 of the FLSA — prohibits oppressive child labor and shipment of goods produced with it.",
+      "category": "Child Labor",
+      "parent_codes": ["29 USC"],
+      "keywords": ["child labor", "minors", "oppressive child labor", "youth", "flsa section 12"],
+      "aliases": ["FLSA 12"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/212"
+    },
+    {
+      "code": "29 USC 214(c)",
+      "title": "Subminimum Wage for Workers with Disabilities",
+      "description": "Section 14(c) of the FLSA — allows special minimum wages, under certificate, for workers whose disabilities affect productivity.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC", "29 USC 214"],
+      "keywords": ["14c", "subminimum wage", "special minimum wage", "disabilities", "section 14c"],
+      "aliases": ["14(c)", "section 14c"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/214"
+    },
+    {
+      "code": "29 USC 215",
+      "title": "Prohibited Acts",
+      "description": "Section 15 of the FLSA — bars retaliation, recordkeeping violations, and shipment of 'hot goods'.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["prohibited acts", "retaliation", "hot goods", "discrimination", "flsa section 15"],
+      "aliases": ["FLSA 15"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/215"
+    },
+    {
+      "code": "29 USC 216",
+      "title": "Penalties and Employer Liability",
+      "description": "Section 16 of the FLSA — back wages, liquidated damages, civil money penalties, and private right of action.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["back wages", "liquidated damages", "civil money penalty", "penalties", "liability", "flsa section 16"],
+      "aliases": ["FLSA 16", "CMP"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/216"
+    },
+    {
+      "code": "29 USC 218",
+      "title": "Relation to Other Laws",
+      "description": "Section 18 of the FLSA — state and local laws with higher standards are not preempted.",
+      "category": "FLSA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["state law", "preemption", "higher standard", "flsa section 18"],
+      "aliases": ["FLSA 18"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/218"
+    },
+    {
+      "code": "29 CFR 516",
+      "title": "Records To Be Kept by Employers",
+      "description": "Recordkeeping requirements under the FLSA — what payroll and time records employers must maintain.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["recordkeeping", "payroll records", "time records", "documentation"],
+      "aliases": ["Part 516"],
+      "url": "https://www.ecfr.gov/current/title-29/part-516"
+    },
+    {
+      "code": "29 CFR 531",
+      "title": "Wage Payments Under the FLSA",
+      "description": "Tip credit for tipped employees, and the treatment of board, lodging, and other facilities and deductions.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["tip credit", "tipped employees", "tips", "deductions", "board and lodging", "facilities"],
+      "aliases": ["Part 531"],
+      "url": "https://www.ecfr.gov/current/title-29/part-531"
+    },
+    {
+      "code": "29 CFR 541",
+      "title": "Overtime Exemptions for White-Collar Employees",
+      "description": "Executive, administrative, professional, computer, and outside sales exemptions — including the salary-basis and duties tests.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["exempt", "exemption", "executive", "administrative", "professional", "salary basis", "duties test", "white collar"],
+      "aliases": ["Part 541", "EAP exemption", "white collar exemption"],
+      "url": "https://www.ecfr.gov/current/title-29/part-541"
+    },
+    {
+      "code": "29 CFR 552",
+      "title": "Domestic Service Employment",
+      "description": "Application of the FLSA to domestic service workers, including home care and the companionship exemption.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["domestic service", "home care", "companionship", "live-in", "household"],
+      "aliases": ["Part 552", "home care rule"],
+      "url": "https://www.ecfr.gov/current/title-29/part-552"
+    },
+    {
+      "code": "29 CFR 553",
+      "title": "FLSA Application to Public Agencies",
+      "description": "Special FLSA rules for state and local government employees, including compensatory time and fire/police partial exemptions.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["public sector", "comp time", "compensatory time", "fire", "police", "government employees"],
+      "aliases": ["Part 553"],
+      "url": "https://www.ecfr.gov/current/title-29/part-553"
+    },
+    {
+      "code": "29 CFR 570",
+      "title": "Child Labor Regulations",
+      "description": "Employment of minors — hours and occupation standards for 14- and 15-year-olds (Reg 3) and the Hazardous Occupations Orders (HOs).",
+      "category": "Child Labor",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["child labor", "minors", "hazardous occupations", "hours standards", "reg 3", "youth employment", "HO"],
+      "aliases": ["Part 570", "Reg 3", "hazardous orders"],
+      "url": "https://www.ecfr.gov/current/title-29/part-570"
+    },
+    {
+      "code": "29 CFR 579",
+      "title": "Child Labor Civil Money Penalties",
+      "description": "Assessment of civil money penalties for child labor violations under the FLSA.",
+      "category": "Child Labor",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["child labor penalties", "civil money penalty", "CMP", "assessment"],
+      "aliases": ["Part 579"],
+      "url": "https://www.ecfr.gov/current/title-29/part-579"
+    },
+    {
+      "code": "29 CFR 778",
+      "title": "Overtime Compensation and the Regular Rate",
+      "description": "How to compute the regular rate of pay and overtime, including bonuses, commissions, and other payments.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["regular rate", "overtime calculation", "bonuses", "commissions", "blended rate"],
+      "aliases": ["Part 778"],
+      "url": "https://www.ecfr.gov/current/title-29/part-778"
+    },
+    {
+      "code": "29 CFR 785",
+      "title": "Hours Worked",
+      "description": "What counts as compensable hours worked — waiting time, on-call time, breaks, training, and travel time.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["hours worked", "waiting time", "on-call", "travel time", "breaks", "training time", "compensable time"],
+      "aliases": ["Part 785"],
+      "url": "https://www.ecfr.gov/current/title-29/part-785"
+    },
+    {
+      "code": "29 CFR 4",
+      "title": "McNamara-O'Hara Service Contract Act",
+      "description": "Prevailing wage and fringe benefit requirements for service employees on federal service contracts.",
+      "category": "SCA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["SCA", "service contract act", "prevailing wage", "fringe benefits", "service contracts", "wage determination"],
+      "aliases": ["Part 4", "Service Contract Act", "McNamara-O'Hara"],
+      "url": "https://www.ecfr.gov/current/title-29/part-4"
+    },
+    {
+      "code": "29 CFR 5",
+      "title": "Davis-Bacon and Related Acts",
+      "description": "Prevailing wage requirements for laborers and mechanics on federally funded construction contracts.",
+      "category": "DBRA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["davis-bacon", "DBRA", "prevailing wage", "construction", "laborers", "mechanics", "federal contracts", "certified payroll"],
+      "aliases": ["Part 5", "Davis Bacon", "DBA"],
+      "url": "https://www.ecfr.gov/current/title-29/part-5"
+    },
+    {
+      "code": "29 CFR 500",
+      "title": "Migrant and Seasonal Agricultural Worker Protection Act",
+      "description": "MSPA regulations — registration of farm labor contractors and protections for migrant and seasonal farmworkers.",
+      "category": "Agriculture",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["MSPA", "migrant", "seasonal", "farm labor contractor", "FLC", "agricultural workers"],
+      "aliases": ["Part 500", "MSPA"],
+      "url": "https://www.ecfr.gov/current/title-29/part-500"
+    },
+    {
+      "code": "29 CFR 501",
+      "title": "H-2A Enforcement",
+      "description": "Enforcement of contractual obligations for temporary agricultural workers admitted under the H-2A visa program.",
+      "category": "Agriculture",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["H-2A", "agricultural", "temporary workers", "foreign labor", "enforcement", "visa"],
+      "aliases": ["Part 501", "H2A"],
+      "url": "https://www.ecfr.gov/current/title-29/part-501"
+    },
+    {
+      "code": "29 CFR 503",
+      "title": "H-2B Enforcement",
+      "description": "Enforcement of obligations for temporary non-agricultural workers admitted under the H-2B visa program.",
+      "category": "Foreign Labor",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["H-2B", "non-agricultural", "temporary workers", "foreign labor", "enforcement", "visa"],
+      "aliases": ["Part 503", "H2B"],
+      "url": "https://www.ecfr.gov/current/title-29/part-503"
+    },
+    {
+      "code": "29 CFR 525",
+      "title": "Employment of Workers with Disabilities at Subminimum Wages",
+      "description": "Section 14(c) certificate program rules for paying special minimum wages to workers with disabilities.",
+      "category": "FLSA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["14c", "section 14c", "subminimum wage", "disabilities", "special wage certificate"],
+      "aliases": ["Part 525", "14(c) certificate"],
+      "url": "https://www.ecfr.gov/current/title-29/part-525"
+    },
+    {
+      "code": "29 CFR 825",
+      "title": "The Family and Medical Leave Act",
+      "description": "FMLA regulations — up to 12 weeks of job-protected leave for qualifying family and medical reasons.",
+      "category": "FMLA",
+      "parent_codes": ["29 CFR"],
+      "keywords": ["FMLA", "family leave", "medical leave", "12 weeks", "job protected", "serious health condition"],
+      "aliases": ["Part 825", "FMLA"],
+      "url": "https://www.ecfr.gov/current/title-29/part-825"
+    },
+    {
+      "code": "29 USC 2601",
+      "title": "Family and Medical Leave Act (Statute)",
+      "description": "The FMLA statute — findings and purposes for job-protected family and medical leave.",
+      "category": "FMLA",
+      "parent_codes": ["29 USC"],
+      "keywords": ["FMLA", "family medical leave", "statute", "leave entitlement"],
+      "aliases": ["FMLA statute"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/2601"
+    },
+    {
+      "code": "29 USC 1801",
+      "title": "Migrant and Seasonal Agricultural Worker Protection Act (Statute)",
+      "description": "The MSPA statute — protections, disclosures, and farm labor contractor registration for farmworkers.",
+      "category": "Agriculture",
+      "parent_codes": ["29 USC"],
+      "keywords": ["MSPA", "migrant", "seasonal", "farmworkers", "farm labor contractor", "statute"],
+      "aliases": ["MSPA statute"],
+      "url": "https://www.law.cornell.edu/uscode/text/29/1801"
+    }
+  ]
+}

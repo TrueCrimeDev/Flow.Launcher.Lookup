@@ -1,0 +1,336 @@
+{
+  "dataset": "airports",
+  "version": "iata-2024",
+  "items": [
+    {
+      "code": "ATL",
+      "title": "Hartsfield–Jackson Atlanta International Airport",
+      "description": "Primary airport serving Atlanta, Georgia, USA — consistently the world's busiest by passenger traffic.",
+      "category": "United States",
+      "parent_codes": ["US", "GA"],
+      "keywords": ["atlanta", "georgia", "hartsfield", "jackson"],
+      "aliases": ["atlanta"],
+      "url": "https://www.world-airport-codes.com/united-states/hartsfield-jackson-atlanta-international-4434.html"
+    },
+    {
+      "code": "LAX",
+      "title": "Los Angeles International Airport",
+      "description": "Primary airport serving Los Angeles, California, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "CA"],
+      "keywords": ["los angeles", "california", "socal"],
+      "aliases": ["los angeles", "la"],
+      "url": ""
+    },
+    {
+      "code": "ORD",
+      "title": "O'Hare International Airport",
+      "description": "Primary international airport serving Chicago, Illinois, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "IL"],
+      "keywords": ["chicago", "illinois", "ohare", "o'hare"],
+      "aliases": ["chicago", "chicago ohare"],
+      "url": ""
+    },
+    {
+      "code": "MDW",
+      "title": "Chicago Midway International Airport",
+      "description": "Secondary airport serving Chicago, Illinois, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "IL"],
+      "keywords": ["chicago", "illinois", "midway"],
+      "aliases": ["chicago midway"],
+      "url": ""
+    },
+    {
+      "code": "DFW",
+      "title": "Dallas/Fort Worth International Airport",
+      "description": "Primary airport serving the Dallas–Fort Worth metroplex, Texas, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "TX"],
+      "keywords": ["dallas", "fort worth", "texas", "metroplex"],
+      "aliases": ["dallas", "dallas fort worth"],
+      "url": ""
+    },
+    {
+      "code": "DEN",
+      "title": "Denver International Airport",
+      "description": "Primary airport serving Denver, Colorado, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "CO"],
+      "keywords": ["denver", "colorado"],
+      "aliases": ["denver"],
+      "url": ""
+    },
+    {
+      "code": "JFK",
+      "title": "John F. Kennedy International Airport",
+      "description": "Major international airport serving New York City, New York, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "NY"],
+      "keywords": ["new york", "nyc", "kennedy", "jfk"],
+      "aliases": ["new york", "new york kennedy"],
+      "url": ""
+    },
+    {
+      "code": "LGA",
+      "title": "LaGuardia Airport",
+      "description": "Domestic-focused airport serving New York City, New York, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "NY"],
+      "keywords": ["new york", "nyc", "laguardia"],
+      "aliases": ["new york laguardia"],
+      "url": ""
+    },
+    {
+      "code": "EWR",
+      "title": "Newark Liberty International Airport",
+      "description": "Major airport serving the New York City area from Newark, New Jersey, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "NJ"],
+      "keywords": ["newark", "new jersey", "new york", "liberty"],
+      "aliases": ["newark"],
+      "url": ""
+    },
+    {
+      "code": "SFO",
+      "title": "San Francisco International Airport",
+      "description": "Primary airport serving the San Francisco Bay Area, California, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "CA"],
+      "keywords": ["san francisco", "california", "bay area"],
+      "aliases": ["san francisco", "sf"],
+      "url": ""
+    },
+    {
+      "code": "SEA",
+      "title": "Seattle–Tacoma International Airport",
+      "description": "Primary airport serving Seattle, Washington, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "WA"],
+      "keywords": ["seattle", "tacoma", "washington", "seatac"],
+      "aliases": ["seattle", "seatac"],
+      "url": ""
+    },
+    {
+      "code": "LAS",
+      "title": "Harry Reid International Airport",
+      "description": "Primary airport serving Las Vegas, Nevada, USA (formerly McCarran).",
+      "category": "United States",
+      "parent_codes": ["US", "NV"],
+      "keywords": ["las vegas", "nevada", "harry reid", "mccarran"],
+      "aliases": ["las vegas", "vegas"],
+      "url": ""
+    },
+    {
+      "code": "MIA",
+      "title": "Miami International Airport",
+      "description": "Primary airport serving Miami, Florida, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "FL"],
+      "keywords": ["miami", "florida"],
+      "aliases": ["miami"],
+      "url": ""
+    },
+    {
+      "code": "MCO",
+      "title": "Orlando International Airport",
+      "description": "Primary airport serving Orlando, Florida, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "FL"],
+      "keywords": ["orlando", "florida", "disney"],
+      "aliases": ["orlando"],
+      "url": ""
+    },
+    {
+      "code": "PHX",
+      "title": "Phoenix Sky Harbor International Airport",
+      "description": "Primary airport serving Phoenix, Arizona, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "AZ"],
+      "keywords": ["phoenix", "arizona", "sky harbor"],
+      "aliases": ["phoenix"],
+      "url": ""
+    },
+    {
+      "code": "IAH",
+      "title": "George Bush Intercontinental Airport",
+      "description": "Primary international airport serving Houston, Texas, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "TX"],
+      "keywords": ["houston", "texas", "bush", "intercontinental"],
+      "aliases": ["houston"],
+      "url": ""
+    },
+    {
+      "code": "BOS",
+      "title": "Boston Logan International Airport",
+      "description": "Primary airport serving Boston, Massachusetts, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "MA"],
+      "keywords": ["boston", "massachusetts", "logan"],
+      "aliases": ["boston"],
+      "url": ""
+    },
+    {
+      "code": "MSP",
+      "title": "Minneapolis–Saint Paul International Airport",
+      "description": "Primary airport serving the Twin Cities, Minnesota, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "MN"],
+      "keywords": ["minneapolis", "saint paul", "twin cities", "minnesota"],
+      "aliases": ["minneapolis"],
+      "url": ""
+    },
+    {
+      "code": "DTW",
+      "title": "Detroit Metropolitan Wayne County Airport",
+      "description": "Primary airport serving Detroit, Michigan, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "MI"],
+      "keywords": ["detroit", "michigan", "metro", "wayne county"],
+      "aliases": ["detroit"],
+      "url": ""
+    },
+    {
+      "code": "SLC",
+      "title": "Salt Lake City International Airport",
+      "description": "Primary airport serving Salt Lake City, Utah, USA.",
+      "category": "United States",
+      "parent_codes": ["US", "UT"],
+      "keywords": ["salt lake city", "utah"],
+      "aliases": ["salt lake city"],
+      "url": ""
+    },
+    {
+      "code": "DCA",
+      "title": "Ronald Reagan Washington National Airport",
+      "description": "Close-in airport serving Washington, D.C., USA, from Arlington, Virginia.",
+      "category": "United States",
+      "parent_codes": ["US", "VA"],
+      "keywords": ["washington", "dc", "reagan", "national", "arlington"],
+      "aliases": ["washington reagan", "reagan national"],
+      "url": ""
+    },
+    {
+      "code": "IAD",
+      "title": "Washington Dulles International Airport",
+      "description": "Primary international airport serving Washington, D.C., USA, from Virginia.",
+      "category": "United States",
+      "parent_codes": ["US", "VA"],
+      "keywords": ["washington", "dc", "dulles", "virginia"],
+      "aliases": ["washington dulles", "dulles"],
+      "url": ""
+    },
+    {
+      "code": "LHR",
+      "title": "London Heathrow Airport",
+      "description": "Primary international airport serving London, United Kingdom — busiest in Europe by passenger traffic.",
+      "category": "United Kingdom",
+      "parent_codes": ["GB"],
+      "keywords": ["london", "heathrow", "england", "uk", "britain"],
+      "aliases": ["london", "london heathrow"],
+      "url": ""
+    },
+    {
+      "code": "CDG",
+      "title": "Paris Charles de Gaulle Airport",
+      "description": "Primary international airport serving Paris, France.",
+      "category": "France",
+      "parent_codes": ["FR"],
+      "keywords": ["paris", "charles de gaulle", "france", "roissy"],
+      "aliases": ["paris", "paris cdg"],
+      "url": ""
+    },
+    {
+      "code": "AMS",
+      "title": "Amsterdam Airport Schiphol",
+      "description": "Primary international airport serving Amsterdam, Netherlands.",
+      "category": "Netherlands",
+      "parent_codes": ["NL"],
+      "keywords": ["amsterdam", "schiphol", "netherlands", "holland"],
+      "aliases": ["amsterdam"],
+      "url": ""
+    },
+    {
+      "code": "FRA",
+      "title": "Frankfurt Airport",
+      "description": "Primary international airport serving Frankfurt, Germany.",
+      "category": "Germany",
+      "parent_codes": ["DE"],
+      "keywords": ["frankfurt", "germany"],
+      "aliases": ["frankfurt"],
+      "url": ""
+    },
+    {
+      "code": "DXB",
+      "title": "Dubai International Airport",
+      "description": "Primary international airport serving Dubai, United Arab Emirates — a major global hub.",
+      "category": "United Arab Emirates",
+      "parent_codes": ["AE"],
+      "keywords": ["dubai", "uae", "emirates", "middle east"],
+      "aliases": ["dubai"],
+      "url": ""
+    },
+    {
+      "code": "SIN",
+      "title": "Singapore Changi Airport",
+      "description": "Primary international airport serving Singapore — frequently rated the world's best.",
+      "category": "Singapore",
+      "parent_codes": ["SG"],
+      "keywords": ["singapore", "changi"],
+      "aliases": ["singapore"],
+      "url": ""
+    },
+    {
+      "code": "HKG",
+      "title": "Hong Kong International Airport",
+      "description": "Primary international airport serving Hong Kong — a major Asian hub.",
+      "category": "Hong Kong",
+      "parent_codes": ["HK"],
+      "keywords": ["hong kong", "chek lap kok"],
+      "aliases": ["hong kong"],
+      "url": ""
+    },
+    {
+      "code": "HND",
+      "title": "Tokyo Haneda Airport",
+      "description": "Close-in international airport serving Tokyo, Japan.",
+      "category": "Japan",
+      "parent_codes": ["JP"],
+      "keywords": ["tokyo", "haneda", "japan"],
+      "aliases": ["tokyo", "tokyo haneda"],
+      "url": ""
+    },
+    {
+      "code": "NRT",
+      "title": "Narita International Airport",
+      "description": "Major international airport serving the Greater Tokyo Area, Japan.",
+      "category": "Japan",
+      "parent_codes": ["JP"],
+      "keywords": ["tokyo", "narita", "japan"],
+      "aliases": ["tokyo narita"],
+      "url": ""
+    },
+    {
+      "code": "YYZ",
+      "title": "Toronto Pearson International Airport",
+      "description": "Primary international airport serving Toronto, Ontario, Canada.",
+      "category": "Canada",
+      "parent_codes": ["CA"],
+      "keywords": ["toronto", "pearson", "ontario", "canada"],
+      "aliases": ["toronto"],
+      "url": ""
+    },
+    {
+      "code": "SYD",
+      "title": "Sydney Kingsford Smith Airport",
+      "description": "Primary international airport serving Sydney, Australia.",
+      "category": "Australia",
+      "parent_codes": ["AU"],
+      "keywords": ["sydney", "kingsford smith", "australia"],
+      "aliases": ["sydney"],
+      "url": ""
+    }
+  ]
+}
