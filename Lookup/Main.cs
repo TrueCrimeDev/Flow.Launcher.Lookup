@@ -54,6 +54,9 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
     private PluginConfig _config = new();
     private readonly SearchIndex _index = new();
     private List<LoadError> _loadErrors = new();
+    /// <summary>Every dataset found on disk, before the enabled_datasets filter —
+    /// the settings panel needs disabled ones too, which _index never sees.</summary>
+    private List<DatasetInfo> _availableDatasets = new();
 
     public void Init(PluginInitContext context)
     {
@@ -71,6 +74,9 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
 
             var load = DataLoader.Load(Path.Combine(pluginDir, "data"));
             _loadErrors = load.Errors;
+            _availableDatasets = load.Datasets
+                .Select(d => new DatasetInfo(d.Dataset, d.Version, d.Items.Count))
+                .ToList();
             _index.Build(load.Datasets, _config.EnabledDatasets);
         }
         catch (Exception ex)
@@ -85,7 +91,14 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
 
     /// <summary>Panel shown in Flow's Settings → Plugins → Lookup.</summary>
     public System.Windows.Controls.Control CreateSettingPanel() =>
-        SettingsPanel.Build(_context, () => _config, _index, () => _loadErrors, ReloadData);
+        SettingsPanel.Build(
+            _context,
+            () => _config,
+            _index,
+            () => _loadErrors,
+            () => _availableDatasets,
+            ReloadData,
+            () => _config.Save(_context.CurrentPluginMetadata.PluginDirectory));
 
     public List<Result> Query(Query query)
     {

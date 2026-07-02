@@ -34,6 +34,20 @@ public sealed class PluginConfig
             ["zip"] = "zipcodes",
         };
 
+    private static readonly JsonSerializerOptions SaveOptions = new(JsonDefaults.SnakeCase)
+    {
+        WriteIndented = true,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    /// <summary>Persists to config.json (canonical formatting — hand-written comments
+    /// do not survive a GUI save).</summary>
+    public void Save(string pluginDirectory)
+    {
+        var path = Path.Combine(pluginDirectory, "config.json");
+        File.WriteAllText(path, JsonSerializer.Serialize(this, SaveOptions));
+    }
+
     public static PluginConfig Load(string pluginDirectory)
     {
         try
