@@ -1,6 +1,6 @@
 {
   "ID": "5E87D393442B4F36822AF344B7BC3C60",
-  "ActionKeywords": ["lu", "na"],
+  "ActionKeywords": ["lu", "na", "zip"],
   "Name": "Lookup",
   "Description": "Fuzzy-search local JSON lookup datasets (NAICS codes and more) from Flow Launcher.",
   "Author": "TrueCrimeDev",

@@ -362,6 +362,29 @@ public class PluginConfigTests
     }
 
     [Fact]
+    public void KeywordDatasets_DefaultsAndOverrides()
+    {
+        // Defaults ship the na/zip scoping, case-insensitively.
+        var defaults = PluginConfig.Load(Path.Combine(Path.GetTempPath(), "no_such_" + Path.GetRandomFileName()));
+        Assert.Equal("naics", defaults.KeywordDatasets["NA"]);
+        Assert.Equal("zipcodes", defaults.KeywordDatasets["zip"]);
+
+        var dir = Path.Combine(Path.GetTempPath(), "lookup_cfg_" + Path.GetRandomFileName());
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllText(Path.Combine(dir, "config.json"),
+                """
+                { "keyword_datasets": { "nc": "naics" } }
+                """);
+            var cfg = PluginConfig.Load(dir);
+            Assert.Equal("naics", cfg.KeywordDatasets["NC"]); // case-insensitive after load
+            Assert.False(cfg.KeywordDatasets.ContainsKey("na")); // explicit map replaces defaults
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
     public void MissingFile_UsesDefaults()
     {
         var cfg = PluginConfig.Load(Path.Combine(Path.GetTempPath(), "no_such_" + Path.GetRandomFileName()));

@@ -50,6 +50,7 @@ The `build.ps1` script in the repo root does the build-and-copy for you.
 |---------------|---------------------------------------------------------------|
 | `lu <query>`  | Search all loaded datasets                                     |
 | `na <query>`  | Search the NAICS dataset only                                  |
+| `zip <query>` | Search the ZIP-code dataset only                               |
 | `lu help`     | Show usage examples                                            |
 | `lu datasets` | List loaded datasets, item counts, and any file-load problems |
 | `lu reload`   | Show a reload command — press **Enter** to re-read the data   |
@@ -58,8 +59,10 @@ Reload is also wired to Flow's built-in **Reload Plugin Data** command.
 
 ### Keyword notes
 
-- The **second** configured keyword is the NAICS-scoped one. If you rename `na` in
-  Flow's plugin settings (e.g. to avoid a collision), the scoping follows the rename.
+- Scoped keywords are driven by `keyword_datasets` in `config.json` (defaults:
+  `na` → `naics`, `zip` → `zipcodes`). Keywords not in the map — including `lu` —
+  search everything. If you rename a keyword in Flow's plugin settings, mirror the
+  rename in the map (e.g. `"keyword_datasets": { "nc": "naics", "zip": "zipcodes" }`).
 - **Upgrading an existing install:** Flow Launcher remembers the keywords a plugin was
   first installed with, so a new keyword in `plugin.json` does not appear automatically.
   Add it under *Settings → Plugins → Lookup → Action keywords* (or delete the plugin
@@ -108,6 +111,19 @@ Field notes:
 Drop another `*.json` file (same shape) into `data\`, then run `lu reload`. Multiple
 datasets are searched together; `lu datasets` shows what's loaded.
 
+### ZIP codes
+
+`tools/ZipConverter` (repo root) converts the free
+[GeoNames US postal file](https://download.geonames.org/export/zip/US.zip) into a
+~3 MB `zipcodes.json` (≈41,500 ZIPs — code, "City, ST" title, county/state category):
+
+```powershell
+dotnet run --project tools\ZipConverter -- US.txt zipcodes.json geonames-2026-07
+```
+
+Drop the output into the installed plugin's `data\` folder and reload. It is a
+user-added file, so reinstalls preserve it.
+
 ### Large NAICS / lookup files
 
 The sample is small. For the full NAICS list (or any large dataset), replace or add a
@@ -126,13 +142,16 @@ Create `config.json` next to `Lookup.dll`. All fields are optional:
 {
   "max_results": 15,
   "enabled_datasets": ["naics"],
-  "default_copy_field": "code"
+  "default_copy_field": "code",
+  "keyword_datasets": { "na": "naics", "zip": "zipcodes" }
 }
 ```
 
 - **`max_results`** — visible result cap (1–50, default 15).
 - **`enabled_datasets`** — only load these dataset names; omit/empty = all.
 - **`default_copy_field`** — `"code"` (default) or `"title"`; what Enter copies.
+- **`keyword_datasets`** — maps scoped action keywords to a dataset name each one
+  searches. Omit for the defaults shown; an explicit empty map `{}` disables scoping.
 
 A missing or malformed `config.json` is ignored — defaults always apply.
 

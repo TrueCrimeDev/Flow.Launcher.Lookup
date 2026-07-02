@@ -21,6 +21,19 @@ public sealed class PluginConfig
     /// <summary>Field copied to the clipboard on Enter: "code" (default) or "title".</summary>
     public string DefaultCopyField { get; set; } = "code";
 
+    /// <summary>Maps scoped action keywords to the dataset each one searches
+    /// (config key <c>keyword_datasets</c>). Keywords not listed here — including the
+    /// primary <c>lu</c> — search every dataset. Defaults cover the shipped keywords;
+    /// if you rename a keyword in Flow's settings, mirror the rename here.</summary>
+    public Dictionary<string, string> KeywordDatasets { get; set; } = DefaultKeywordDatasets();
+
+    private static Dictionary<string, string> DefaultKeywordDatasets() =>
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["na"] = "naics",
+            ["zip"] = "zipcodes",
+        };
+
     public static PluginConfig Load(string pluginDirectory)
     {
         try
@@ -33,6 +46,11 @@ public sealed class PluginConfig
 
             if (cfg.MaxResults is < 1 or > 50) cfg.MaxResults = 15;
             if (string.IsNullOrWhiteSpace(cfg.DefaultCopyField)) cfg.DefaultCopyField = "code";
+            // Re-wrap for case-insensitive lookup (the deserializer builds a
+            // case-sensitive dictionary); null falls back to the shipped defaults,
+            // an explicit empty map disables keyword scoping.
+            cfg.KeywordDatasets = new Dictionary<string, string>(
+                cfg.KeywordDatasets ?? DefaultKeywordDatasets(), StringComparer.OrdinalIgnoreCase);
             return cfg;
         }
         catch

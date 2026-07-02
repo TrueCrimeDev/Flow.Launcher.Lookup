@@ -178,23 +178,13 @@ public class Main : IPlugin, IContextMenu, IReloadable
     private static string JoinKeyword(string? typed, string value) =>
         string.IsNullOrEmpty(typed) || typed == "*" ? value : $"{typed} {value}";
 
-    /// <summary>The secondary action keyword scopes the search to the NAICS dataset.
-    /// Matched by position in the live metadata (with a literal "na" fallback for
-    /// installs whose saved keyword list predates it), so the scoping survives the
-    /// user renaming keywords in Flow's settings.</summary>
+    /// <summary>Scoped action keywords restrict the search to one dataset, driven by
+    /// the config's keyword_datasets map (defaults: na → naics, zip → zipcodes).
+    /// Unmapped keywords search everything.</summary>
     private string? DatasetFilterFor(string? typed)
     {
         if (string.IsNullOrEmpty(typed) || typed == "*") return null;
-        var kws = _context.CurrentPluginMetadata.ActionKeywords;
-
-        // The first keyword always searches everything — even if the user renamed it
-        // to something that collides with the scoping rules below.
-        if (kws is { Count: > 0 } && string.Equals(typed, kws[0], StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        if (kws is { Count: > 1 } && string.Equals(typed, kws[1], StringComparison.OrdinalIgnoreCase))
-            return "naics";
-        return string.Equals(typed, "na", StringComparison.OrdinalIgnoreCase) ? "naics" : null;
+        return _config.KeywordDatasets.TryGetValue(typed, out var dataset) ? dataset : null;
     }
 
     private bool DatasetLoaded(string name) =>
