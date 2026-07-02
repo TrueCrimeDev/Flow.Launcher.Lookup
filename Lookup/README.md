@@ -20,6 +20,30 @@ for *copy code*, *copy title*, *copy full JSON*, and *open URL* (when a record h
 
 ---
 
+## Working from a fresh clone
+
+Everything needed to build lives in the repo; on a new machine:
+
+1. Install the [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) and
+   [Flow Launcher](https://www.flowlauncher.com/).
+2. `git clone https://github.com/TrueCrimeDev/Flow.Launcher.Lookup.git`
+3. **If this machine's global git identity is a different account** (e.g. a work PC),
+   set the identity locally for this repo before committing, so commits don't go out
+   under the wrong name:
+
+   ```powershell
+   git config user.name  "<the account this repo belongs to>"
+   git config user.email "<its email>"
+   ```
+
+   Pushing also needs that account's credentials (`gh auth login`, or a PAT).
+4. Build + install into Flow: `./build.ps1` (details under **Build** below).
+5. Optional: regenerate the ZIP-code dataset for this machine — see **ZIP codes**
+   below. Generated/user datasets live in the *installed* plugin's `data\` folder,
+   not the repo, so each machine builds its own.
+
+---
+
 ## Install
 
 ### From a release / build output
