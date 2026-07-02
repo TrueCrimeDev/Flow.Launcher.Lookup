@@ -142,6 +142,92 @@ public class ScorerTests
         var hit = BuildIndex().Search("payroll", 20)[0];
         Assert.NotEmpty(hit.TitleHighlight); // "Payroll Services" contains "payroll"
     }
+
+    [Theory]
+    [InlineData("541 511")]
+    [InlineData("54-1511")]
+    [InlineData("541.511")]
+    public void GroupedCodeQuery_StillFindsExactCode(string query)
+    {
+        var hits = BuildIndex().Search(query, 20);
+        Assert.Equal("541511", hits[0].Record.Item.Code);
+    }
+
+    [Fact]
+    public void GroupedCodePrefix_ReturnsChildren()
+    {
+        var codes = Codes(BuildIndex().Search("54 15", 20));
+        Assert.Contains("541511", codes);
+        Assert.Contains("541512", codes);
+        Assert.DoesNotContain("111110", codes);
+    }
+
+    [Fact]
+    public void IrregularWhitespaceInDataset_StillMatchesExactly()
+    {
+        var items = new List<LookupItem>
+        {
+            new() { Code = "999", Title = "  Software   Publishers " }, // sloppy JSON whitespace
+        };
+        var index = new SearchIndex();
+        index.Build(new[] { new LookupDataset { Dataset = "test", Items = items } });
+
+        var hits = index.Search("software publishers", 10);
+        Assert.Single(hits);
+        // Normalised on both sides: this must hit the exact-title tier, not a weak one.
+        Assert.True(hits[0].Score >= 8000, $"expected exact-title tier, got {hits[0].Score}");
+    }
+
+    [Fact]
+    public void SeparatorParentCode_MatchesVerbatimQuery()
+    {
+        // Parent codes with separators ("29 USC") must match the query the user
+        // actually types, not just an artificial separator-stripped form.
+        var items = new List<LookupItem>
+        {
+            new() { Code = "Part 541", Title = "Overtime exemption definitions", ParentCodes = { "29 USC" } },
+        };
+        var index = new SearchIndex();
+        index.Build(new[] { new LookupDataset { Dataset = "test", Items = items } });
+
+        Assert.Single(index.Search("29 usc", 10));
+    }
+
+    [Fact]
+    public void CompactedCode_DoesNotPhantomMatchAcrossSeparators()
+    {
+        // "31-33" compacts to "3133" for exact/prefix matching, but a substring like
+        // "13" never appears in the displayed code and must not match.
+        var items = new List<LookupItem>
+        {
+            new() { Code = "31-33", Title = "Manufacturing" },
+        };
+        var index = new SearchIndex();
+        index.Build(new[] { new LookupDataset { Dataset = "test", Items = items } });
+
+        Assert.Empty(index.Search("13", 10));
+        Assert.NotEmpty(index.Search("31-33", 10)); // exact, separators kept
+        Assert.NotEmpty(index.Search("3133", 10));  // exact, separators stripped
+    }
+
+    [Fact]
+    public void DatasetFilter_RestrictsResults()
+    {
+        var index = new SearchIndex();
+        index.Build(new[]
+        {
+            new LookupDataset { Dataset = "naics", Items = { new LookupItem { Code = "541511", Title = "Custom Computer Programming Services", Keywords = { "software" } } } },
+            new LookupDataset { Dataset = "other", Items = { new LookupItem { Code = "X1", Title = "Software Thing", Keywords = { "software" } } } },
+        });
+
+        var all = Codes(index.Search("software", 10));
+        Assert.Contains("541511", all);
+        Assert.Contains("X1", all);
+
+        var scoped = Codes(index.Search("software", 10, "naics"));
+        Assert.Contains("541511", scoped);
+        Assert.DoesNotContain("X1", scoped);
+    }
 }
 
 public class TextUtilsTests
@@ -163,6 +249,15 @@ public class TextUtilsTests
     [Fact]
     public void Tokenize_SplitsOnPunctuation() =>
         Assert.Equal(new[] { "a", "b", "c" }, TextUtils.Tokenize("a-b, c").ToArray());
+
+    [Theory]
+    [InlineData("54-1511", "541511")]
+    [InlineData("541 511", "541511")]
+    [InlineData("1910.95", "191095")]
+    [InlineData("541511", "541511")]
+    [InlineData("", "")]
+    public void CompactCode_StripsGroupingSeparators(string input, string expected) =>
+        Assert.Equal(expected, TextUtils.CompactCode(input));
 }
 
 public class DataLoaderTests

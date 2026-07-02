@@ -1,13 +1,15 @@
 # Lookup — Flow Launcher Plugin
 
-A local C# Flow Launcher plugin (action keyword `lu`) that fuzzy-searches local JSON
-lookup datasets, starting with NAICS business classification codes and generic enough
-to add other datasets later.
+A local C# Flow Launcher plugin (action keywords `lu` = all datasets, `na` = NAICS
+only) that fuzzy-searches local JSON lookup datasets, starting with NAICS business
+classification codes and generic enough to add other datasets later.
 
-**Status:** pre-implementation. The directory currently holds only this file, `SPEC.md`,
-and `logs/`. No source code exists yet.
+**Status:** implemented. `Lookup/` holds the plugin (net9.0-windows, `IPlugin` +
+`IContextMenu` + `IReloadable`), `Lookup.Tests/` the xUnit suite for the SDK-free core
+(models + services compiled directly into the test assembly — new `Services/*.cs` files
+must be added to `Lookup.Tests.csproj`'s `<Compile Include>` list).
 
-**Full requirements:** see [`SPEC.md`](./SPEC.md). Build from that spec.
+**Full requirements:** see [`SPEC.md`](./SPEC.md).
 
 ## Hard rule
 
@@ -18,18 +20,17 @@ The sibling `../Flow.Launcher/` checkout is a usable reference.
 
 ## Conventions
 
-- JSON: `System.Text.Json` unless there is a strong reason otherwise.
-- Search: prefer a dependency-free scorer; avoid heavy packages.
+- JSON: `System.Text.Json`; the on-disk dialect (snake_case, comments, trailing
+  commas) is defined once in `Lookup/Services/JsonDefaults.cs`.
+- Search: dependency-free tiered scorer (`Lookup/Services/Scorer.cs`); avoid heavy packages.
 - Keep the plugin fast, local, portable; do not overengineer configuration.
-- See `SPEC.md` → "Open technical decisions" for the items to pin first
-  (target framework, full `plugin.json` fields, clipboard API, `IPlugin` vs `IAsyncPlugin`).
+- Indexed record fields are normalized with `TextUtils.Normalize` (the same treatment
+  queries get); only `SearchRecord.TitleLower` stays un-collapsed for highlight indices.
 
 ## Commands
 
-Fill in once the project exists:
-
-- Build: `dotnet build` — target framework TBD (see SPEC open decisions)
-- Test: `dotnet test`
-- Install: copy build output into the Flow Launcher plugins folder, then restart
-  Flow Launcher (verify the exact path against the docs).
-ye
+- Build: `dotnet build Lookup\Lookup.csproj -c Release` (flat output in `Lookup\bin\Release\`)
+- Test: `dotnet test Lookup.Tests\Lookup.Tests.csproj`
+- Install: `./build.ps1` — builds and copies into
+  `%APPDATA%\FlowLauncher\Plugins\Lookup\`, preserving the installed `config.json`
+  and `data\` files; restart Flow Launcher afterwards.

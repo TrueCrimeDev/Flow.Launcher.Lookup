@@ -21,15 +21,6 @@ public sealed class PluginConfig
     /// <summary>Field copied to the clipboard on Enter: "code" (default) or "title".</summary>
     public string DefaultCopyField { get; set; } = "code";
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        // Match the data files: config keys are snake_case (max_results, enabled_datasets, …).
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
-
     public static PluginConfig Load(string pluginDirectory)
     {
         try
@@ -37,7 +28,7 @@ public sealed class PluginConfig
             var path = Path.Combine(pluginDirectory, "config.json");
             if (!File.Exists(path)) return new PluginConfig();
 
-            var cfg = JsonSerializer.Deserialize<PluginConfig>(File.ReadAllText(path), JsonOptions)
+            var cfg = JsonSerializer.Deserialize<PluginConfig>(File.ReadAllText(path), JsonDefaults.SnakeCase)
                       ?? new PluginConfig();
 
             if (cfg.MaxResults is < 1 or > 50) cfg.MaxResults = 15;

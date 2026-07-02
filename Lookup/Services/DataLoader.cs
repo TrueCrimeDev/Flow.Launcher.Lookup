@@ -25,14 +25,6 @@ public sealed class LoadResult
 /// </summary>
 public static class DataLoader
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-    };
-
     public static LoadResult Load(string dataDirectory)
     {
         var result = new LoadResult();
@@ -54,7 +46,7 @@ public static class DataLoader
             try
             {
                 using var stream = File.OpenRead(file);
-                var dataset = JsonSerializer.Deserialize<LookupDataset>(stream, JsonOptions);
+                var dataset = JsonSerializer.Deserialize<LookupDataset>(stream, JsonDefaults.SnakeCase);
                 if (dataset is null)
                 {
                     result.Errors.Add(new LoadError(file, "File is empty or not a JSON object."));

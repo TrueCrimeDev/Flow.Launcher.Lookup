@@ -30,6 +30,17 @@ public static class TextUtils
         return sb.ToString();
     }
 
+    /// <summary>Removes the code-grouping separators ('-', '.', ' ') so "54-1511",
+    /// "541 511" and "541511" all compare equal when matched as codes.</summary>
+    public static string CompactCode(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        var sb = new StringBuilder(text.Length);
+        foreach (var ch in text)
+            if (ch is not ('-' or '.' or ' ')) sb.Append(ch);
+        return sb.ToString();
+    }
+
     /// <summary>Splits text into lowercase alphanumeric word tokens (punctuation is a separator).</summary>
     public static IEnumerable<string> Tokenize(string? text)
     {

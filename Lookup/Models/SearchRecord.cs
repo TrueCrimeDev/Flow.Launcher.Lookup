@@ -8,21 +8,37 @@ namespace Lookup.Models;
 /// <summary>
 /// An indexed, search-optimised view of a <see cref="LookupItem"/>.
 ///
-/// All lowercased / tokenised forms are computed once at index-build time so the
+/// All normalised / tokenised forms are computed once at index-build time so the
 /// per-keystroke hot path allocates nothing beyond the parsed query itself.
+///
+/// Matching fields are fully normalised (lowercased, trimmed, single-spaced) with
+/// <see cref="TextUtils.Normalize"/> — the same treatment every query gets — so
+/// irregular whitespace in dataset JSON can never disable the exact/prefix/phrase
+/// tiers. <see cref="TitleLower"/> alone stays un-collapsed: its character indices
+/// must line up with the displayed title for highlighting.
 /// </summary>
 public sealed class SearchRecord
 {
     public LookupItem Item { get; }
     public string Dataset { get; }
 
-    public string CodeLower { get; }
+    public string CodeNorm { get; }
+    /// <summary>Code with grouping separators removed, for code-like queries
+    /// ("54-1511" and "541 511" both find 541511).</summary>
+    public string CodeCompact { get; }
+    public string TitleNorm { get; }
+    /// <summary>Raw title lowercased (whitespace untouched) — used only for
+    /// highlighting, where indices must map onto the displayed title.</summary>
     public string TitleLower { get; }
-    public string DescriptionLower { get; }
-    public string CategoryLower { get; }
-    public string[] KeywordsLower { get; }
-    public string[] AliasesLower { get; }
-    public string[] ParentCodesLower { get; }
+    public string DescriptionNorm { get; }
+    public string CategoryNorm { get; }
+    public string[] KeywordsNorm { get; }
+    public string[] AliasesNorm { get; }
+    /// <summary>Parent codes, normalised (prefix matching against word queries).</summary>
+    public string[] ParentCodesNorm { get; }
+    /// <summary>Parent codes, normalised and separator-stripped (prefix matching
+    /// against code-like queries).</summary>
+    public string[] ParentCodesCompact { get; }
 
     /// <summary>Distinct whole words drawn from title, category, keywords and aliases.
     /// Used for whole-word matching and as the candidate pool for typo tolerance.</summary>
@@ -33,20 +49,25 @@ public sealed class SearchRecord
         Item = item;
         Dataset = dataset;
 
-        CodeLower = item.Code.ToLowerInvariant();
+        CodeNorm = TextUtils.Normalize(item.Code);
+        CodeCompact = TextUtils.CompactCode(CodeNorm);
+        TitleNorm = TextUtils.Normalize(item.Title);
         TitleLower = item.Title.ToLowerInvariant();
-        DescriptionLower = item.Description.ToLowerInvariant();
-        CategoryLower = item.Category.ToLowerInvariant();
-        // Guard against null/blank elements in case a record bypassed DataLoader.Sanitize.
-        KeywordsLower = Lower(item.Keywords);
-        AliasesLower = Lower(item.Aliases);
-        ParentCodesLower = Lower(item.ParentCodes);
+        DescriptionNorm = TextUtils.Normalize(item.Description);
+        CategoryNorm = TextUtils.Normalize(item.Category);
+        KeywordsNorm = NormalizeAll(item.Keywords);
+        AliasesNorm = NormalizeAll(item.Aliases);
+        ParentCodesNorm = NormalizeAll(item.ParentCodes);
+        ParentCodesCompact = ParentCodesNorm
+            .Select(TextUtils.CompactCode)
+            .Where(p => p.Length > 0)
+            .ToArray();
 
         Words = new HashSet<string>(StringComparer.Ordinal);
-        AddWords(TitleLower);
-        AddWords(CategoryLower);
-        foreach (var k in KeywordsLower) AddWords(k);
-        foreach (var a in AliasesLower) AddWords(a);
+        AddWords(TitleNorm);
+        AddWords(CategoryNorm);
+        foreach (var k in KeywordsNorm) AddWords(k);
+        foreach (var a in AliasesNorm) AddWords(a);
     }
 
     private void AddWords(string text)
@@ -54,8 +75,10 @@ public sealed class SearchRecord
         foreach (var w in TextUtils.Tokenize(text)) Words.Add(w);
     }
 
-    private static string[] Lower(IEnumerable<string>? values) =>
+    /// <summary>Normalises every element; drops entries that are null/blank after
+    /// normalisation (guards records that bypassed DataLoader.Sanitize).</summary>
+    private static string[] NormalizeAll(IEnumerable<string>? values) =>
         values is null
             ? Array.Empty<string>()
-            : values.Where(v => !string.IsNullOrEmpty(v)).Select(v => v.ToLowerInvariant()).ToArray();
+            : values.Select(TextUtils.Normalize).Where(v => v.Length > 0).ToArray();
 }

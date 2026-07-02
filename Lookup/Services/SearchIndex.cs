@@ -63,20 +63,24 @@ public sealed class SearchIndex
     }
 
     /// <summary>Score every record against the query and return the top
-    /// <paramref name="maxResults"/> matches, highest score first.</summary>
-    public List<ScoredRecord> Search(string query, int maxResults)
+    /// <paramref name="maxResults"/> matches, highest score first.
+    /// Pass <paramref name="datasetFilter"/> to restrict results to one dataset (case-insensitive).</summary>
+    public List<ScoredRecord> Search(string query, int maxResults, string? datasetFilter = null)
     {
         var parsed = new ParsedQuery(query);
-        var hits = new List<ScoredRecord>();
+        if (parsed.Text.Length == 0) return new List<ScoredRecord>();
 
-        if (parsed.Text.Length == 0) return hits;
-
+        var hits = new List<(SearchRecord Record, int Score)>();
         var records = _records; // stable snapshot for the duration of this scan
         foreach (var r in records)
         {
+            if (datasetFilter is not null &&
+                !string.Equals(r.Dataset, datasetFilter, StringComparison.OrdinalIgnoreCase))
+                continue;
+
             var score = Scorer.Score(r, parsed);
             if (score > 0)
-                hits.Add(new ScoredRecord(r, score, Scorer.ComputeHighlight(r.Item.Title, parsed)));
+                hits.Add((r, score));
         }
 
         hits.Sort(static (a, b) =>
@@ -84,13 +88,19 @@ public sealed class SearchIndex
             var c = b.Score.CompareTo(a.Score);
             if (c != 0) return c;
             // Deterministic tie-break: shorter code first, then alphabetical title.
-            c = a.Record.CodeLower.Length.CompareTo(b.Record.CodeLower.Length);
+            c = a.Record.CodeNorm.Length.CompareTo(b.Record.CodeNorm.Length);
             if (c != 0) return c;
-            return string.CompareOrdinal(a.Record.TitleLower, b.Record.TitleLower);
+            return string.CompareOrdinal(a.Record.TitleNorm, b.Record.TitleNorm);
         });
 
         if (maxResults > 0 && hits.Count > maxResults)
             hits.RemoveRange(maxResults, hits.Count - maxResults);
-        return hits;
+
+        // Highlights only for the visible page — computing them before the cut would
+        // do the string scan for every matching record just to throw most away.
+        var results = new List<ScoredRecord>(hits.Count);
+        foreach (var (record, score) in hits)
+            results.Add(new ScoredRecord(record, score, Scorer.ComputeHighlight(record, parsed)));
+        return results;
     }
 }

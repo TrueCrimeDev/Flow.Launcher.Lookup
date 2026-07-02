@@ -11,7 +11,8 @@ using Lookup.Services;
 namespace Lookup;
 
 /// <summary>
-/// Flow Launcher entry point for the Lookup plugin (action keyword <c>lu</c>).
+/// Flow Launcher entry point for the Lookup plugin (action keywords: <c>lu</c> = all datasets,
+/// second keyword — <c>na</c> by default — = NAICS only).
 ///
 /// Implements:
 /// <list type="bullet">
@@ -25,7 +26,21 @@ namespace Lookup;
 public class Main : IPlugin, IContextMenu, IReloadable
 {
     private const string IconPath = "Images\\icon.png";
+    /// <summary>Bullet for dataset record rows; the magnifier stays on the plugin's
+    /// own rows (help, commands, dataset list, errors).</summary>
+    private const string DotIconPath = "Images\\dot.png";
     private const string ClassName = nameof(Main);
+
+    /// <summary>Pins sub-command results above appended search hits — the scorer's
+    /// ceiling is ExactCode + 200 (10,200), so anything above that always leads.
+    /// Only used under the plugin's own keyword, where no other plugin competes.</summary>
+    private const int CommandScore = 100_000;
+
+    /// <summary>Command-row base score. A global ('*') install shares the result list
+    /// with every other plugin, where the 100k pin would hijack Flow's ranking for
+    /// anyone typing "help"/"datasets"/"reload" — stay modest there.</summary>
+    private static int CommandBase(string? typedKw) =>
+        string.IsNullOrEmpty(typedKw) || typedKw == "*" ? 100 : CommandScore;
 
     private static readonly JsonSerializerOptions PrettyJson = new()
     {
@@ -70,38 +85,50 @@ public class Main : IPlugin, IContextMenu, IReloadable
     public List<Result> Query(Query query)
     {
         var search = (query.Search ?? string.Empty).Trim();
+        var typedKw = query.ActionKeyword;   // "" when the user made the plugin global via '*'
+        var kw = DisplayKeyword(typedKw);    // keyword for human-readable hints
+        var datasetFilter = DatasetFilterFor(typedKw);
 
-        // ---- Sub-commands (exact match only, so e.g. "help desk" still searches) ----
+        // ---- Sub-commands (exact match only, so e.g. "help desk" still searches).
+        // Real search hits are appended below the command results, so a record that is
+        // literally titled "help", "datasets" or "reload" stays reachable. ----
         switch (search.ToLowerInvariant())
         {
             case "help":
-                return HelpResults();
+                return WithSearchHits(HelpResults(typedKw), search, datasetFilter, typedKw);
             case "datasets":
-                return DatasetResults();
+                return WithSearchHits(DatasetResults(kw, CommandBase(typedKw)), search, datasetFilter, typedKw);
             case "reload":
-                ReloadData();
-                return new List<Result>
-                {
-                    Info("Reloaded lookup data",
-                        $"{_index.Count} item(s) across {_index.Datasets.Count} dataset(s){ErrorSuffix()}")
-                };
+                return WithSearchHits(new List<Result> { ReloadCommand(kw, CommandBase(typedKw)) }, search, datasetFilter, typedKw);
         }
 
         // ---- Empty query: show guidance ----
-        if (search.Length == 0) return HelpResults();
+        if (search.Length == 0) return HelpResults(typedKw);
 
         // ---- Hard failure: nothing loaded ----
         if (_index.Count == 0)
         {
-            var msg = _loadErrors.Count > 0 ? _loadErrors[0].Message : "No datasets are loaded.";
+            var errors = _loadErrors; // snapshot: ReloadData swaps the list on another thread
+            var msg = errors.Count > 0 ? errors[0].Message : "No datasets are loaded.";
             return new List<Result>
             {
-                Error("Lookup has no data", $"{msg}   Fix the data folder, then type  lu reload .")
+                Info("Lookup has no data", $"{msg}   Fix the data folder, then type  {kw} reload .")
+            };
+        }
+
+        // ---- Scoped keyword whose dataset isn't loaded: say so, instead of every
+        // query dying as a misleading "no close matches". ----
+        if (datasetFilter is not null && !DatasetLoaded(datasetFilter))
+        {
+            return new List<Result>
+            {
+                Info($"The “{datasetFilter}” dataset is not loaded",
+                    $"Check the data folder and enabled_datasets in config.json, then type  {kw} reload .")
             };
         }
 
         // ---- Search ----
-        var hits = _index.Search(search, _config.MaxResults);
+        var hits = _index.Search(search, _config.MaxResults, datasetFilter);
         if (hits.Count == 0)
         {
             return new List<Result>
@@ -110,7 +137,7 @@ public class Main : IPlugin, IContextMenu, IReloadable
             };
         }
 
-        return hits.Select(ToResult).ToList();
+        return hits.Select(h => ToResult(h, typedKw)).ToList();
     }
 
     public List<Result> LoadContextMenus(Result selectedResult)
@@ -118,12 +145,15 @@ public class Main : IPlugin, IContextMenu, IReloadable
         if (selectedResult.ContextData is not LookupItem item)
             return new List<Result>();
 
-        var menus = new List<Result>
-        {
-            Menu("Copy code", item.Code, () => _context.API.CopyToClipboard(item.Code)),
-            Menu("Copy title", item.Title, () => _context.API.CopyToClipboard(item.Title)),
-            Menu("Copy full JSON", "Copy this record as JSON", () => _context.API.CopyToClipboard(ToJson(item))),
-        };
+        var menus = new List<Result>();
+
+        // Code/title can each be empty (records need only one of the two) — offering a
+        // copy of an empty string would silently no-op in Flow's clipboard API.
+        if (!string.IsNullOrEmpty(item.Code))
+            menus.Add(Menu("Copy code", item.Code, () => _context.API.CopyToClipboard(item.Code)));
+        if (!string.IsNullOrEmpty(item.Title))
+            menus.Add(Menu("Copy title", item.Title, () => _context.API.CopyToClipboard(item.Title)));
+        menus.Add(Menu("Copy full JSON", "Copy this record as JSON", () => _context.API.CopyToClipboard(ToJson(item))));
 
         if (!string.IsNullOrWhiteSpace(item.Url))
             menus.Add(Menu("Open URL", item.Url, () => _context.API.OpenUrl(item.Url)));
@@ -131,9 +161,48 @@ public class Main : IPlugin, IContextMenu, IReloadable
         return menus;
     }
 
+    // --- keyword helpers ------------------------------------------------------
+
+    /// <summary>Keyword shown in hints: the typed one when present, else the first
+    /// configured keyword. Never hardcoded, so hints stay correct after the user
+    /// renames keywords in Flow's settings.</summary>
+    private string DisplayKeyword(string? typed)
+    {
+        if (!string.IsNullOrEmpty(typed) && typed != "*") return typed;
+        var kws = _context.CurrentPluginMetadata.ActionKeywords;
+        return kws?.FirstOrDefault(k => !string.IsNullOrEmpty(k) && k != "*") ?? "lu";
+    }
+
+    /// <summary>Prefixes a value with the typed keyword for AutoCompleteText; a global
+    /// ('*') plugin has no keyword, so the value stands alone.</summary>
+    private static string JoinKeyword(string? typed, string value) =>
+        string.IsNullOrEmpty(typed) || typed == "*" ? value : $"{typed} {value}";
+
+    /// <summary>The secondary action keyword scopes the search to the NAICS dataset.
+    /// Matched by position in the live metadata (with a literal "na" fallback for
+    /// installs whose saved keyword list predates it), so the scoping survives the
+    /// user renaming keywords in Flow's settings.</summary>
+    private string? DatasetFilterFor(string? typed)
+    {
+        if (string.IsNullOrEmpty(typed) || typed == "*") return null;
+        var kws = _context.CurrentPluginMetadata.ActionKeywords;
+
+        // The first keyword always searches everything — even if the user renamed it
+        // to something that collides with the scoping rules below.
+        if (kws is { Count: > 0 } && string.Equals(typed, kws[0], StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        if (kws is { Count: > 1 } && string.Equals(typed, kws[1], StringComparison.OrdinalIgnoreCase))
+            return "naics";
+        return string.Equals(typed, "na", StringComparison.OrdinalIgnoreCase) ? "naics" : null;
+    }
+
+    private bool DatasetLoaded(string name) =>
+        _index.Datasets.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
+
     // --- result construction -------------------------------------------------
 
-    private Result ToResult(ScoredRecord hit)
+    private Result ToResult(ScoredRecord hit, string? typedKw)
     {
         var item = hit.Record.Item;
         var title = string.IsNullOrEmpty(item.Code) ? item.Title : $"{item.Code} - {item.Title}";
@@ -149,18 +218,22 @@ public class Main : IPlugin, IContextMenu, IReloadable
             highlight = highlight.Select(i => i + offset).ToList();
         }
 
+        // Code-less records are legal (title-only), so Tab completes to the title
+        // instead of wiping the typed query with a bare keyword.
+        var completeValue = string.IsNullOrEmpty(item.Code) ? item.Title : item.Code;
+
         return new Result
         {
             Title = title,
             SubTitle = subtitle,
-            IcoPath = IconPath,
+            IcoPath = DotIconPath,
             Score = hit.Score,
             CopyText = copyValue,
             TitleHighlightData = highlight,
             TitleToolTip = title,
             SubTitleToolTip = subtitle,
             ContextData = item,
-            AutoCompleteText = $"{_context.CurrentPluginMetadata.ActionKeyword} {item.Code}",
+            AutoCompleteText = JoinKeyword(typedKw, completeValue),
             Action = _ =>
             {
                 _context.API.CopyToClipboard(copyValue);
@@ -178,19 +251,56 @@ public class Main : IPlugin, IContextMenu, IReloadable
         return parts.Count > 0 ? string.Join("  ·  ", parts) : "";
     }
 
-    private string CopyValue(LookupItem item) =>
-        string.Equals(_config.DefaultCopyField, "title", StringComparison.OrdinalIgnoreCase)
-            ? item.Title
-            : item.Code;
+    /// <summary>Value copied on Enter. Falls back to the other field when the preferred
+    /// one is empty — the loader guarantees at least one of code/title is set, so the
+    /// copy is never a silent empty-string no-op.</summary>
+    private string CopyValue(LookupItem item)
+    {
+        var preferTitle = string.Equals(_config.DefaultCopyField, "title", StringComparison.OrdinalIgnoreCase);
+        var primary = preferTitle ? item.Title : item.Code;
+        return string.IsNullOrEmpty(primary) ? (preferTitle ? item.Code : item.Title) : primary;
+    }
 
     private static string ToJson(LookupItem item) => JsonSerializer.Serialize(item, PrettyJson);
 
     // --- sub-command result builders ----------------------------------------
 
-    private List<Result> HelpResults()
+    /// <summary>Appends real search hits below sub-command results so records that
+    /// happen to be titled "help", "datasets" or "reload" remain reachable.</summary>
+    private List<Result> WithSearchHits(List<Result> commands, string search, string? datasetFilter, string? typedKw)
     {
-        // Use the live action keyword so help + Tab-autocomplete stay correct if renamed.
-        var kw = _context.CurrentPluginMetadata.ActionKeyword;
+        var hits = _index.Search(search, _config.MaxResults, datasetFilter);
+        commands.AddRange(hits.Select(h => ToResult(h, typedKw)));
+        return commands;
+    }
+
+    /// <summary>'reload' is Enter-gated: Query fires on every keystroke, so reloading
+    /// inline would re-read every dataset file while the user is still typing.</summary>
+    private Result ReloadCommand(string kw, int score) => new()
+    {
+        Title = "Reload lookup data",
+        SubTitle = "Press Enter to re-read the data folder and rebuild the index.",
+        IcoPath = IconPath,
+        Score = score,
+        Action = _ =>
+        {
+            // Result actions run on Flow's UI thread — push the disk re-read off it.
+            // ShowMsg needs an absolute icon path (relative resolves against Flow's
+            // own directory, silently falling back to the default icon), and it
+            // dispatches to the UI thread internally, so it is background-safe.
+            var icon = Path.Combine(_context.CurrentPluginMetadata.PluginDirectory, IconPath);
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                ReloadData();
+                _context.API.ShowMsg("Lookup reloaded",
+                    $"{_index.Count} item(s) across {_index.Datasets.Count} dataset(s){ErrorSuffix(kw)}", icon);
+            });
+            return true;
+        },
+    };
+
+    private List<Result> HelpResults(string? typedKw)
+    {
         var examples = new (string Query, string Desc)[]
         {
             ("541511",          "Exact code match"),
@@ -203,20 +313,22 @@ public class Main : IPlugin, IContextMenu, IReloadable
             ("help",            "Show these examples"),
         };
 
-        return examples.Select(e => new Result
+        var baseScore = CommandBase(typedKw);
+        return examples.Select((e, i) => new Result
         {
-            Title = $"{kw} {e.Query}",
+            Title = JoinKeyword(typedKw, e.Query),
             SubTitle = e.Desc,
             IcoPath = IconPath,
-            Score = 0,
-            AutoCompleteText = $"{kw} {e.Query}",
+            Score = baseScore - i, // descending: keeps the examples in listed order
+            AutoCompleteText = JoinKeyword(typedKw, e.Query),
             Action = _ => false, // keep Flow open; Tab autocompletes the example
         }).ToList();
     }
 
-    private List<Result> DatasetResults()
+    private List<Result> DatasetResults(string kw, int baseScore)
     {
         var list = new List<Result>();
+        var score = baseScore;
 
         foreach (var d in _index.Datasets)
         {
@@ -226,21 +338,29 @@ public class Main : IPlugin, IContextMenu, IReloadable
                 Title = $"{d.Name}{version}",
                 SubTitle = $"{d.Count} item(s)",
                 IcoPath = IconPath,
-                Score = 100,
+                Score = score--,
             });
         }
 
+        // Same descending counter as the rows above, so the guidance line stays on
+        // top and file warnings follow beneath it.
         if (list.Count == 0)
-            list.Add(Error("No datasets loaded",
-                "Put dataset .json files in the plugin's  data  folder, then type  lu reload ."));
+            list.Add(new Result
+            {
+                Title = "No datasets loaded",
+                SubTitle = $"Put dataset .json files in the plugin's  data  folder, then type  {kw} reload .",
+                IcoPath = IconPath,
+                Score = score--,
+            });
 
-        foreach (var e in _loadErrors)
+        var errors = _loadErrors; // snapshot: ReloadData swaps the list on another thread
+        foreach (var e in errors)
             list.Add(new Result
             {
                 Title = $"⚠ {Path.GetFileName(e.File)}",
                 SubTitle = e.Message,
                 IcoPath = IconPath,
-                Score = 50,
+                Score = score--,
             });
 
         return list;
@@ -248,15 +368,13 @@ public class Main : IPlugin, IContextMenu, IReloadable
 
     // --- small result helpers ------------------------------------------------
 
-    private string ErrorSuffix() =>
-        _loadErrors.Count == 0 ? "" : $"   ({_loadErrors.Count} file issue(s) — see  lu datasets )";
+    private string ErrorSuffix(string kw)
+    {
+        var errors = _loadErrors; // snapshot: ReloadData swaps the list on another thread
+        return errors.Count == 0 ? "" : $"   ({errors.Count} file issue(s) — see  {kw} datasets )";
+    }
 
     private static Result Info(string title, string subtitle) => new()
-    {
-        Title = title, SubTitle = subtitle, IcoPath = IconPath, Score = 100,
-    };
-
-    private static Result Error(string title, string subtitle) => new()
     {
         Title = title, SubTitle = subtitle, IcoPath = IconPath, Score = 100,
     };

@@ -21,6 +21,7 @@
     <Compile Include="..\Lookup\Models\LookupDataset.cs" Link="src\LookupDataset.cs" />
     <Compile Include="..\Lookup\Models\SearchRecord.cs" Link="src\SearchRecord.cs" />
     <Compile Include="..\Lookup\Services\TextUtils.cs" Link="src\TextUtils.cs" />
+    <Compile Include="..\Lookup\Services\JsonDefaults.cs" Link="src\JsonDefaults.cs" />
     <Compile Include="..\Lookup\Services\Scorer.cs" Link="src\Scorer.cs" />
     <Compile Include="..\Lookup\Services\SearchIndex.cs" Link="src\SearchIndex.cs" />
     <Compile Include="..\Lookup\Services\DataLoader.cs" Link="src\DataLoader.cs" />

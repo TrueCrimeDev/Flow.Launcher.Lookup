@@ -1,15 +1,17 @@
 # Lookup — Flow Launcher plugin
 
 Fuzzy-search large local JSON lookup datasets straight from Flow Launcher, using the
-action keyword **`lu`**. Ships with a NAICS business-classification sample and is
-generic enough to drop in any other dataset.
+action keyword **`lu`** (all datasets) or **`na`** (NAICS only). Ships with a NAICS
+business-classification sample and is generic enough to drop in any other dataset.
 
 ```
 lu 541511          → 541511 - Custom Computer Programming Services
 lu 541             → everything under code 541
+lu 54-1511         → separators in codes are ignored ("541 511" works too)
 lu software        → keyword search
 lu computer systems→ multi-word phrase
 lu sofware         → typo-tolerant (still finds "software")
+na software        → same search, restricted to the NAICS dataset
 ```
 
 Press **Enter** to copy the code. Open the **context menu** (Shift+Enter / right-click)
@@ -47,11 +49,21 @@ The `build.ps1` script in the repo root does the build-and-copy for you.
 | Command       | Action                                                        |
 |---------------|---------------------------------------------------------------|
 | `lu <query>`  | Search all loaded datasets                                     |
+| `na <query>`  | Search the NAICS dataset only                                  |
 | `lu help`     | Show usage examples                                            |
 | `lu datasets` | List loaded datasets, item counts, and any file-load problems |
-| `lu reload`   | Reload the JSON data without restarting Flow Launcher          |
+| `lu reload`   | Show a reload command — press **Enter** to re-read the data   |
 
-`lu reload` is also wired to Flow's built-in **Reload Plugin Data** command.
+Reload is also wired to Flow's built-in **Reload Plugin Data** command.
+
+### Keyword notes
+
+- The **second** configured keyword is the NAICS-scoped one. If you rename `na` in
+  Flow's plugin settings (e.g. to avoid a collision), the scoping follows the rename.
+- **Upgrading an existing install:** Flow Launcher remembers the keywords a plugin was
+  first installed with, so a new keyword in `plugin.json` does not appear automatically.
+  Add it under *Settings → Plugins → Lookup → Action keywords* (or delete the plugin
+  and reinstall).
 
 ---
 
@@ -160,6 +172,9 @@ dotnet test Lookup.Tests\Lookup.Tests.csproj
 ```
 
 `build.ps1` builds Release and copies the output into your Flow Launcher plugins folder.
+Your installed `config.json` and any dataset files you added to `data\` are preserved;
+shipped sample files are refreshed on each install, so don't edit samples in place —
+copy them under a new name first.
 
 ---
 

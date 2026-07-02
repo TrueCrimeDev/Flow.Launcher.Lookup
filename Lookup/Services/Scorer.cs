@@ -18,11 +18,16 @@ public sealed class ParsedQuery
     /// that happen to appear in prose descriptions never create noise.</summary>
     public bool LooksLikeCode { get; }
 
+    /// <summary>For code-like queries: <see cref="Text"/> with the grouping separators
+    /// stripped, so "54-1511" and "541 511" match the stored code "541511".</summary>
+    public string CodeCompact { get; }
+
     public ParsedQuery(string raw)
     {
         Text = TextUtils.Normalize(raw);
         Terms = new List<string>(TextUtils.Tokenize(Text)).ToArray();
         LooksLikeCode = IsCodeLike(Text);
+        CodeCompact = LooksLikeCode ? TextUtils.CompactCode(Text) : "";
     }
 
     private static bool IsCodeLike(string s)
@@ -80,20 +85,30 @@ public static class Scorer
         var best = 0;
 
         // ---- Code matches (always attempted; codes may be numeric or alphanumeric) ----
-        if (r.CodeLower.Length > 0)
+        // Code-like queries compare separator-stripped forms so "54-1511" and "541 511"
+        // still find 541511; word queries compare the normalised text verbatim.
+        var codeQ = q.LooksLikeCode ? q.CodeCompact : q.Text;
+        var code = q.LooksLikeCode ? r.CodeCompact : r.CodeNorm;
+        if (code.Length > 0 && codeQ.Length > 0)
         {
-            if (r.CodeLower == q.Text)
+            if (code == codeQ)
                 best = Max(best, ExactCode + 200);
-            else if (r.CodeLower.StartsWith(q.Text, StringComparison.Ordinal))
-                best = Max(best, CodePrefix + CoverageBonus(q.Text.Length, r.CodeLower.Length));
-            else if (r.CodeLower.Contains(q.Text, StringComparison.Ordinal))
+            else if (code.StartsWith(codeQ, StringComparison.Ordinal))
+                best = Max(best, CodePrefix + CoverageBonus(codeQ.Length, code.Length));
+            // Substring compares the un-stripped forms: on compacted codes, digits that
+            // are only adjacent after stripping ("31-33" → "3133") would phantom-match
+            // fragments like "13" that never appear in the displayed code.
+            else if (r.CodeNorm.Contains(q.Text, StringComparison.Ordinal))
                 best = Max(best, CodeSubstring);
         }
 
         // Parent codes: prefix only, ≥2 chars, low weight (so "54" doesn't flood results).
-        if (q.Text.Length >= 2)
-            foreach (var p in r.ParentCodesLower)
-                if (p == q.Text || p.StartsWith(q.Text, StringComparison.Ordinal))
+        // Same form on both sides: stripped vs stripped for code-like queries, normalised
+        // vs normalised for word queries (a parent like "29 USC" must match typed "29 usc").
+        var parents = q.LooksLikeCode ? r.ParentCodesCompact : r.ParentCodesNorm;
+        if (codeQ.Length >= 2)
+            foreach (var p in parents)
+                if (p.StartsWith(codeQ, StringComparison.Ordinal))
                 {
                     best = Max(best, ParentCodeHit);
                     break;
@@ -103,27 +118,28 @@ public static class Scorer
         if (q.LooksLikeCode) return best;
 
         // ---- Exact field equality ----
-        if (r.TitleLower == q.Text) best = Max(best, ExactTitle);
-        best = Max(best, ExactInArray(r.AliasesLower, q.Text, ExactAlias));
-        best = Max(best, ExactInArray(r.KeywordsLower, q.Text, ExactKeyword));
+        if (r.TitleNorm == q.Text) best = Max(best, ExactTitle);
+        best = Max(best, ExactInArray(r.AliasesNorm, q.Text, ExactAlias));
+        best = Max(best, ExactInArray(r.KeywordsNorm, q.Text, ExactKeyword));
 
         // ---- Prefix / phrase (substring) matches ----
-        if (r.TitleLower.StartsWith(q.Text, StringComparison.Ordinal))
-            best = Max(best, TitlePrefix + CoverageBonus(q.Text.Length, r.TitleLower.Length));
-        else if (r.TitleLower.Contains(q.Text, StringComparison.Ordinal))
+        if (r.TitleNorm.StartsWith(q.Text, StringComparison.Ordinal))
+            best = Max(best, TitlePrefix + CoverageBonus(q.Text.Length, r.TitleNorm.Length));
+        else if (r.TitleNorm.Contains(q.Text, StringComparison.Ordinal))
             best = Max(best, PhraseTitle);
 
-        best = Max(best, PhraseInArray(r.AliasesLower, q.Text, PhraseAlias));
-        best = Max(best, PhraseInArray(r.KeywordsLower, q.Text, PhraseKeyword));
-        if (r.CategoryLower.Contains(q.Text, StringComparison.Ordinal)) best = Max(best, PhraseCategory);
-        if (r.DescriptionLower.Contains(q.Text, StringComparison.Ordinal)) best = Max(best, PhraseDesc);
+        best = Max(best, PhraseInArray(r.AliasesNorm, q.Text, PhraseAlias));
+        best = Max(best, PhraseInArray(r.KeywordsNorm, q.Text, PhraseKeyword));
+        if (r.CategoryNorm.Contains(q.Text, StringComparison.Ordinal)) best = Max(best, PhraseCategory);
+        if (r.DescriptionNorm.Contains(q.Text, StringComparison.Ordinal)) best = Max(best, PhraseDesc);
 
         // ---- All-words: every query term is a whole word somewhere in the record ----
         if (q.Terms.Length > 1 && AllTermsAreWords(r, q.Terms))
             best = Max(best, AllWords + Math.Min(q.Terms.Length, 10) * 20); // cap bonus at +200
 
-        // ---- Typo tolerance: only worth computing when nothing stronger matched ----
-        if (best < AllWords)
+        // ---- Typo tolerance: the fuzzy tier tops out at FuzzyBase + FuzzyRange (1300),
+        // below every other non-zero tier, so it can only matter when nothing matched. ----
+        if (best == 0)
         {
             var sim = FuzzySimilarity(r, q.Terms);
             if (sim >= FuzzyFloor)
@@ -133,14 +149,14 @@ public static class Scorer
         return best;
     }
 
-    /// <summary>Indices into <paramref name="title"/> to highlight (where the query appears).
-    /// Returns an empty list when the query is not a visible substring of the title.</summary>
-    public static List<int> ComputeHighlight(string title, ParsedQuery q)
+    /// <summary>Indices into the record's displayed title to highlight (where the query
+    /// appears). Uses the cached raw-lowercased title so indices line up with what Flow
+    /// renders. Returns an empty list when the query is not a visible substring.</summary>
+    public static List<int> ComputeHighlight(SearchRecord r, ParsedQuery q)
     {
         var result = new List<int>();
         if (q.Text.Length == 0 || q.LooksLikeCode) return result;
-        var lower = title.ToLowerInvariant();
-        var idx = lower.IndexOf(q.Text, StringComparison.Ordinal);
+        var idx = r.TitleLower.IndexOf(q.Text, StringComparison.Ordinal);
         if (idx < 0) return result;
         for (var i = idx; i < idx + q.Text.Length; i++) result.Add(i);
         return result;
@@ -186,6 +202,12 @@ public static class Scorer
             var termBest = 0.0;
             foreach (var w in r.Words)
             {
+                // Length gap alone bounds similarity at 1 - |Δlen|/maxLen; skip the
+                // O(n·m) Levenshtein pass when that bound is already below the floor.
+                var max = Math.Max(t.Length, w.Length);
+                if (max == 0 || 1.0 - (double)Math.Abs(t.Length - w.Length) / max < FuzzyFloor)
+                    continue;
+
                 var s = TextUtils.Similarity(t, w);
                 if (s > termBest) termBest = s;
             }
