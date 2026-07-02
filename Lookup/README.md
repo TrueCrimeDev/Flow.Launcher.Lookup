@@ -209,6 +209,10 @@ copy them under a new name first.
   items). Errors are listed with the file name.
 - **Edited a data file but results are stale** — run `lu reload` (data is cached in
   memory; it is not re-read per keystroke).
+- **"Failed to copy" toast on Enter** — the Windows clipboard was locked by another
+  app (clipboard history / sync tools). The plugin retries with the lock-tolerant
+  `SetText` path itself; if you still see this, it came from Flow's own copy fallback —
+  upgrading Flow Launcher past 2.1.3 picks up the upstream fix.
 
 ---
 

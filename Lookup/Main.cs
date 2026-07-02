@@ -168,10 +168,10 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
         // Code/title can each be empty (records need only one of the two) — offering a
         // copy of an empty string would silently no-op in Flow's clipboard API.
         if (!string.IsNullOrEmpty(item.Code))
-            menus.Add(Menu("Copy code", item.Code, () => _context.API.CopyToClipboard(item.Code)));
+            menus.Add(Menu("Copy code", item.Code, () => ClipboardHelper.Copy(item.Code, _context.API)));
         if (!string.IsNullOrEmpty(item.Title))
-            menus.Add(Menu("Copy title", item.Title, () => _context.API.CopyToClipboard(item.Title)));
-        menus.Add(Menu("Copy full JSON", "Copy this record as JSON", () => _context.API.CopyToClipboard(ToJson(item))));
+            menus.Add(Menu("Copy title", item.Title, () => ClipboardHelper.Copy(item.Title, _context.API)));
+        menus.Add(Menu("Copy full JSON", "Copy this record as JSON", () => ClipboardHelper.Copy(ToJson(item), _context.API)));
 
         if (!string.IsNullOrWhiteSpace(item.Url))
             menus.Add(Menu("Open URL", item.Url, () => _context.API.OpenUrl(item.Url)));
@@ -244,7 +244,7 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
             AutoCompleteText = JoinKeyword(typedKw, completeValue),
             Action = _ =>
             {
-                _context.API.CopyToClipboard(copyValue);
+                ClipboardHelper.Copy(copyValue, _context.API);
                 return true; // hide Flow after copying
             },
         };
