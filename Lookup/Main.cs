@@ -21,9 +21,10 @@ namespace Lookup;
 ///   unnecessary; Flow already runs <see cref="Query"/> inside a cancellable Task.</item>
 ///   <item><see cref="IContextMenu"/> — per-result copy/open actions.</item>
 ///   <item><see cref="IReloadable"/> — powers Flow's built-in "Reload Plugin Data".</item>
+///   <item><see cref="ISettingProvider"/> — the panel in Flow's plugin settings.</item>
 /// </list>
 /// </summary>
-public class Main : IPlugin, IContextMenu, IReloadable
+public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
 {
     private const string IconPath = "Images\\icon.png";
     /// <summary>Bullet for dataset record rows; the magnifier stays on the plugin's
@@ -81,6 +82,10 @@ public class Main : IPlugin, IContextMenu, IReloadable
 
     /// <summary>Called by Flow's "Reload Plugin Data" command.</summary>
     public void ReloadData() => LoadData();
+
+    /// <summary>Panel shown in Flow's Settings → Plugins → Lookup.</summary>
+    public System.Windows.Controls.Control CreateSettingPanel() =>
+        SettingsPanel.Build(_context, () => _config, _index, () => _loadErrors, ReloadData);
 
     public List<Result> Query(Query query)
     {
