@@ -1,8 +1,9 @@
 # Lookup — Flow Launcher plugin
 
 Fuzzy-search large local JSON lookup datasets straight from Flow Launcher, using the
-action keyword **`lu`** (all datasets) or **`na`** (NAICS only). Ships with a NAICS
-business-classification sample and is generic enough to drop in any other dataset.
+action keyword **`lu`** (all datasets) or **`na`** (NAICS only). Ships with the full
+WHD NAICS business-classification list (~2,400 codes) and is generic enough to drop
+in any other dataset.
 
 ```
 lu 541511          → 541511 - Custom Computer Programming Services
@@ -38,7 +39,7 @@ The `build.ps1` script in the repo root does the build-and-copy for you.
   Lookup.dll
   plugin.json
   Images\icon.png
-  data\naics.sample.json     ← datasets live here
+  data\naics.json            ← datasets live here
   config.json                ← optional (see Configuration)
 ```
 
@@ -124,13 +125,13 @@ dotnet run --project tools\ZipConverter -- US.txt zipcodes.json geonames-2026-07
 Drop the output into the installed plugin's `data\` folder and reload. It is a
 user-added file, so reinstalls preserve it.
 
-### Large NAICS / lookup files
+### Large lookup files
 
-The sample is small. For the full NAICS list (or any large dataset), replace or add a
-file in `data\` — e.g. `data\naics.full.json`. The whole file is parsed once at startup
-and held in memory; a few thousand records search in well under a millisecond. Files of
-hundreds of thousands of rows will still work but would benefit from an inverted index
-(not currently implemented).
+Each file is parsed once at startup and held in memory; a few thousand records search
+in well under a millisecond, and a ~41,500-ZIP dataset is still instant.
+Files of hundreds of thousands of rows will still work but would benefit from an
+inverted index (not currently implemented). The shipped `naics.json` was converted
+from the WHD NAICS export kept at `tools/naics-whd-source.json`.
 
 ---
 
