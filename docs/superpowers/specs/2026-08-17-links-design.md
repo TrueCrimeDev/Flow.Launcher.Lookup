@@ -129,8 +129,19 @@ into `Result` fields. Decision order:
 Favicons render with `RoundedIcon = true`; site favicons are square and read as
 misaligned next to Flow's other icons otherwise.
 
-Cache location: `<PluginSettingsDirectoryPath>\icons\<host>.png`. A failed fetch is
-logged and falls back to a glyph; it is never retried in a tight loop.
+Cache location: `<PluginSettingsDirectoryPath>\icons\<host>.<ext>`, where the extension
+is sniffed from the response's magic bytes (`.png`, `.ico`, `.jpg`, `.gif`, `.bmp` — the
+formats Flow's `ImageLoader` accepts). Bytes are stored raw: the SDK-free core cannot
+decode images, and it does not need to. A body that is not a recognised image, such as
+an HTML error page, is discarded rather than cached.
+
+Favicons are fetched first-party, from `https://<host>/favicon.ico` — the site the link
+already points at — never from a third-party favicon service that would learn which
+links the user opens.
+
+A failed fetch falls back to a glyph and the host is not retried for the rest of the
+session: results re-resolve icons on every keystroke, so one dead host would otherwise
+become a request storm.
 
 `offline_icons: true` in `config.json` disables step 3 entirely, restoring the
 plugin's no-network guarantee.

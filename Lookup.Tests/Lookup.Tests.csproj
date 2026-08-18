@@ -32,6 +32,7 @@
     <Compile Include="..\Lookup\Services\LinkProjector.cs" Link="src\LinkProjector.cs" />
     <Compile Include="..\Lookup\Services\QueryParser.cs" Link="src\QueryParser.cs" />
     <Compile Include="..\Lookup\Services\IconResolver.cs" Link="src\IconResolver.cs" />
+    <Compile Include="..\Lookup\Services\FaviconCache.cs" Link="src\FaviconCache.cs" />
   </ItemGroup>
 
 </Project>
