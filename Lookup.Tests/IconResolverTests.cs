@@ -147,3 +147,30 @@ public sealed class StripPlaceholderTests
         Assert.Equal(expected, IconResolver.StripPlaceholder(target));
     }
 }
+
+/// <summary>Local targets reach Result.IcoPath directly, where Flow does not expand
+/// environment variables — so the resolver has to.</summary>
+public sealed class IconEnvironmentExpansionTests
+{
+    [Fact]
+    public void LocalTarget_HasEnvironmentVariablesExpanded()
+    {
+        var entry = new LinkEntry { Name = "Docs", Target = @"%USERPROFILE%\Documents" };
+
+        var spec = IconResolver.Resolve(entry, faviconsEnabled: false, cachedFaviconPath: null);
+
+        Assert.Equal(IconKind.Image, spec.Kind);
+        Assert.DoesNotContain("%USERPROFILE%", spec.Value);
+        Assert.EndsWith(@"\Documents", spec.Value);
+    }
+
+    [Fact]
+    public void UnknownVariable_IsLeftAloneRatherThanDropped()
+    {
+        var entry = new LinkEntry { Name = "X", Target = @"%NOT_A_REAL_VAR_XYZ%\thing" };
+
+        var spec = IconResolver.Resolve(entry, false, null);
+
+        Assert.Equal(@"%NOT_A_REAL_VAR_XYZ%\thing", spec.Value);
+    }
+}

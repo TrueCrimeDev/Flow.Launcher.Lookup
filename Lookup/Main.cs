@@ -189,24 +189,28 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
 
         // ---- Search ----
         var hits = _index.Search(search, _config.MaxResults, datasetFilter);
-        if (hits.Count == 0)
-        {
-            return new List<Result>
-            {
-                Info("No close matches found", $"Nothing matched “{search}”. Try fewer or different words.")
-            };
-        }
-
         var results = hits.Select(h => ToResult(h, typedKw)).ToList();
 
         // A parameterised link typed with a value ("jira ABC-123") is a different action
         // from the bare link row, so it replaces that row rather than sitting beside it.
+        //
+        // This runs before the empty check, not after: the whole point of a {q} link is
+        // that the typed value is arbitrary text, which by design matches nothing in the
+        // index. Checking for "no results" first would reject every parameterised query.
         var match = QueryParser.Match(search, _linkEntries);
         if (match is not null && match.Link.HasQueryPlaceholder && match.Remainder.Length > 0)
         {
             var matchedId = IdOf(match.Link);
             results.RemoveAll(r => r.ContextData is LookupItem existing && existing.Id == matchedId);
             results.Insert(0, ToLinkResult(match.Link, matchedId, CommandBase(typedKw), typedKw, match.Remainder));
+        }
+
+        if (results.Count == 0)
+        {
+            return new List<Result>
+            {
+                Info("No close matches found", $"Nothing matched “{search}”. Try fewer or different words.")
+            };
         }
 
         return results;

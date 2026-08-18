@@ -63,8 +63,10 @@ public static class IconResolver
                 : new IconSpec(IconKind.Image, cachedFaviconPath, Rounded: true);
         }
 
+        // Environment variables are expanded here, not at open time: this path goes
+        // straight to Result.IcoPath, and Flow's image loader does not expand them.
         return IsLocalTarget(target)
-            ? new IconSpec(IconKind.Image, target)
+            ? new IconSpec(IconKind.Image, Expand(target))
             : new IconSpec(IconKind.Glyph, LinkGlyph);
     }
 
@@ -73,6 +75,18 @@ public static class IconResolver
     /// the icon decision and the favicon cache lookup need.</summary>
     public static string StripPlaceholder(string? target) =>
         (target ?? "").Replace(Placeholder, "", StringComparison.OrdinalIgnoreCase).Trim();
+
+    private static string Expand(string target)
+    {
+        try
+        {
+            return Environment.ExpandEnvironmentVariables(target);
+        }
+        catch (Exception)
+        {
+            return target; // an unexpandable value is still worth showing
+        }
+    }
 
     private static bool IsWebTarget(string target) =>
         target.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
