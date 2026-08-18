@@ -171,6 +171,21 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
             menus.Add(Menu("Copy code", item.Code, () => ClipboardHelper.Copy(item.Code, _context.API)));
         if (!string.IsNullOrEmpty(item.Title))
             menus.Add(Menu("Copy title", item.Title, () => ClipboardHelper.Copy(item.Title, _context.API)));
+
+        // Combined formats only earn their own row when they'd differ from the two
+        // single-field rows above — a code-only or title-only record already has that
+        // single value covered, so a redundant "code - title" entry would just repeat it.
+        if (!string.IsNullOrEmpty(item.Code) && !string.IsNullOrEmpty(item.Title))
+        {
+            var codeTitle = CopyFormatter.CodeTitle(item);
+            menus.Add(Menu("Copy code - title", codeTitle, () => ClipboardHelper.Copy(codeTitle, _context.API)));
+        }
+        if (!string.IsNullOrWhiteSpace(item.Description))
+        {
+            var full = CopyFormatter.FullDetails(item);
+            menus.Add(Menu("Copy full details", "Code, title, and the full NAICS description", () => ClipboardHelper.Copy(full, _context.API)));
+        }
+
         menus.Add(Menu("Copy full JSON", "Copy this record as JSON", () => ClipboardHelper.Copy(ToJson(item), _context.API)));
 
         if (!string.IsNullOrWhiteSpace(item.Url))
@@ -213,7 +228,7 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
     private Result ToResult(ScoredRecord hit, string? typedKw)
     {
         var item = hit.Record.Item;
-        var title = string.IsNullOrEmpty(item.Code) ? item.Title : $"{item.Code} - {item.Title}";
+        var title = CopyFormatter.CodeTitle(item);
         var subtitle = BuildSubtitle(item);
         var copyValue = CopyValue(item);
 
