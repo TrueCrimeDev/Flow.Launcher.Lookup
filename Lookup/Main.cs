@@ -130,7 +130,10 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
             () => _loadErrors,
             () => _availableDatasets,
             ReloadData,
-            () => _config.Save(_context.CurrentPluginMetadata.PluginDirectory));
+            () => _config.Save(_context.CurrentPluginMetadata.PluginDirectory),
+            () => _linkEntries,
+            () => _linkErrors,
+            links => LinkStore.Save(_context.CurrentPluginMetadata.PluginSettingsDirectoryPath, links));
 
     public List<Result> Query(Query query)
     {

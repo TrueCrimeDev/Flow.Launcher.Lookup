@@ -1,7 +1,7 @@
 # Lookup — Flow Launcher plugin
 
 Fuzzy-search large local JSON lookup datasets straight from Flow Launcher, using the
-action keyword **`lu`** (all datasets) or **`na`** (NAICS only). Ships with the full
+action keyword **`lu`** (all datasets), **`na`** (NAICS only) or **`go`** (your links). Ships with the full
 WHD NAICS business-classification list (~2,400 codes) and is generic enough to drop
 in any other dataset.
 
@@ -17,6 +17,44 @@ na software        → same search, restricted to the NAICS dataset
 
 Press **Enter** to copy the code. Open the **context menu** (Shift+Enter / right-click)
 for *copy code*, *copy title*, *copy full JSON*, and *open URL* (when a record has one).
+
+---
+
+## Links
+
+The same plugin opens your own links, under the action keyword **`go`**. Links are also
+searched by `lu`, so one query covers both datasets and links.
+
+```
+go                 → list every link
+go gh              → open the link aliased "gh"
+go jira ABC-123    → substitute ABC-123 into the Jira link's {q} and open it
+lu github          → links appear beside dataset hits
+```
+
+A link is a name, optional aliases, and a target — a URL, file, folder or application.
+A target containing `{q}` takes the text typed after the alias, so one entry can query a
+site as well as open it. Press **Enter** to open; the context menu offers *copy target*,
+*copy name* and *copy aliases*.
+
+An exact or prefix match on a link's name or alias always ranks above dataset hits — a
+two-letter alias would otherwise lose to a few thousand NAICS rows.
+
+### Editing links
+
+Settings → Plugins → Lookup → **Links**: add, edit and delete entries, browse for a file
+target, and pick an icon. Links are stored in `links.json` in Flow's per-plugin settings
+directory, **not** in the plugin folder, so a plugin update cannot delete them.
+
+### Icons
+
+By default each link picks its own icon: the real icon of a local file, folder or
+executable; the site's favicon for a URL; a Segoe Fluent glyph otherwise. Any entry can
+override this with a glyph or an image path.
+
+Favicons are fetched from the site itself — never a third-party favicon service — and
+cached on disk. Set `offline_icons: true` in `config.json` to disable that fetch and keep
+the plugin fully offline; links then use glyphs and local icons only.
 
 ---
 

@@ -1,8 +1,11 @@
 # Lookup — Flow Launcher Plugin
 
 A local C# Flow Launcher plugin (action keywords `lu` = all datasets, `na` = NAICS
-only) that fuzzy-searches local JSON lookup datasets, starting with NAICS business
-classification codes and generic enough to add other datasets later.
+only, `go` = user links) that fuzzy-searches local JSON lookup datasets, starting with
+NAICS business classification codes and generic enough to add other datasets later.
+It also opens user-defined links, which are projected into the same search index and
+stored in `links.json` under Flow's per-plugin settings directory — see
+[`docs/superpowers/specs/2026-08-17-links-design.md`](./docs/superpowers/specs/2026-08-17-links-design.md).
 
 **Status:** implemented. `Lookup/` holds the plugin (net9.0-windows, `IPlugin` +
 `IContextMenu` + `IReloadable`), `Lookup.Tests/` the xUnit suite for the SDK-free core

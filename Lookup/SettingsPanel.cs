@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Flow.Launcher.Plugin;
+using Lookup.Models;
 using Lookup.Services;
 
 namespace Lookup;
@@ -32,7 +33,10 @@ internal static class SettingsPanel
         Func<List<LoadError>> loadErrors,
         Func<IReadOnlyList<DatasetInfo>> availableDatasets,
         Action reloadData,
-        Action saveConfig)
+        Action saveConfig,
+        Func<List<LinkEntry>> links,
+        Func<List<LinkError>> linkErrors,
+        Action<List<LinkEntry>> saveLinks)
     {
         var pluginDir = context.CurrentPluginMetadata.PluginDirectory;
         var dataDir = Path.Combine(pluginDir, "data");
@@ -103,6 +107,12 @@ internal static class SettingsPanel
         root.Children.Add(Hint("What each action keyword searches. Add or rename the keywords themselves above, next to \"Action keyword\"."));
         var keywordRows = new StackPanel();
         root.Children.Add(keywordRows);
+
+        // ---- Links -----------------------------------------------------------
+
+        root.Children.Add(Header("Links"));
+        root.Children.Add(Hint("Named targets that  go  opens. A target may contain {q} — the text typed after the alias is substituted into it, so one link can also query a site."));
+        root.Children.Add(LinksEditor.Build(context, links, linkErrors, saveLinks, reloadData));
 
         // ---- Files + actions ---------------------------------------------------
 
