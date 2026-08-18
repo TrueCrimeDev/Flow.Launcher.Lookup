@@ -205,6 +205,12 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
             results.Insert(0, ToLinkResult(match.Link, matchedId, CommandBase(typedKw), typedKw, match.Remainder));
         }
 
+        // Under a links keyword the query is a destination, not a lookup: anything that
+        // matches no link is presumed to be something the user wants to search for.
+        // The fallback is appended, not substituted, so real link matches still lead.
+        if (IsLinksScope(datasetFilter) && FallbackLink() is { } fallback)
+            results.Add(ToLinkResult(fallback, itemId: "", score: 0, typedKw, search));
+
         if (results.Count == 0)
         {
             return new List<Result>
@@ -231,6 +237,35 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
         return _linkEntries
             .Select(link => ToLinkResult(link, IdOf(link), 0, typedKw, ""))
             .ToList();
+    }
+
+    /// <summary>The web-search fallback as a synthetic link, so it inherits {q}
+    /// substitution, URL encoding and favicon resolution from the normal link path.
+    /// Null when the user has blanked fallback_search.</summary>
+    private LinkEntry? FallbackLink()
+    {
+        var template = _config.FallbackSearch;
+        if (string.IsNullOrWhiteSpace(template) || !template.Contains("{q}", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return new LinkEntry
+        {
+            Name = $"Search {SearchHost(template)}",
+            Target = template,
+            Icon = "auto",
+        };
+    }
+
+    /// <summary>Host of the fallback template, minus a leading "www.", for the row title.
+    /// Falls back to "the web" when the template is not a parsable URL.</summary>
+    private static string SearchHost(string template)
+    {
+        var probe = IconResolver.StripPlaceholder(template);
+        if (!Uri.TryCreate(probe, UriKind.Absolute, out var uri) || string.IsNullOrEmpty(uri.Host))
+            return "the web";
+
+        var host = uri.Host;
+        return host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? host[4..] : host;
     }
 
     private bool IsLinksScope(string? datasetFilter) =>

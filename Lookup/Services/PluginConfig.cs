@@ -27,6 +27,11 @@ public sealed class PluginConfig
     /// if you rename a keyword in Flow's settings, mirror the rename here.</summary>
     public Dictionary<string, string> KeywordDatasets { get; set; } = DefaultKeywordDatasets();
 
+    /// <summary>Where a links-scoped query goes when it matches no link: a URL template
+    /// whose <c>{q}</c> receives the typed text. Blank disables the fallback, leaving
+    /// an unmatched query to report no matches as before.</summary>
+    public string FallbackSearch { get; set; } = "https://www.google.com/search?q={q}";
+
     /// <summary>Disables favicon fetching, restoring the plugin's fully-offline
     /// guarantee. Links then fall back to glyphs and local target icons, both of
     /// which need no network.</summary>

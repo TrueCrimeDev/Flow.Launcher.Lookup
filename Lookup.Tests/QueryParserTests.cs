@@ -145,3 +145,36 @@ public sealed class QueryParserTests
         Assert.False(QueryParser.NeedsParameter(plain, ""));
     }
 }
+
+/// <summary>The web-search fallback is a synthetic link, so it must round-trip through
+/// the same substitution the real ones use.</summary>
+public sealed class FallbackSearchTests
+{
+    [Fact]
+    public void DefaultTemplate_IsAGoogleSearchWithAPlaceholder()
+    {
+        var template = new PluginConfig().FallbackSearch;
+
+        Assert.Contains("google.com", template);
+        Assert.Contains("{q}", template);
+    }
+
+    [Fact]
+    public void DefaultTemplate_SubstitutesAndEncodesTypedText()
+    {
+        var fallback = new LinkEntry { Name = "Search google.com", Target = new PluginConfig().FallbackSearch };
+
+        var url = QueryParser.BuildTarget(fallback, "wage and hour");
+
+        Assert.Equal("https://www.google.com/search?q=wage%20and%20hour", url);
+    }
+
+    [Fact]
+    public void FallbackIsNeverTreatedAsIncomplete_OnceTextIsTyped()
+    {
+        var fallback = new LinkEntry { Name = "Search", Target = new PluginConfig().FallbackSearch };
+
+        Assert.False(QueryParser.NeedsParameter(fallback, "anything"));
+        Assert.True(QueryParser.NeedsParameter(fallback, ""));
+    }
+}

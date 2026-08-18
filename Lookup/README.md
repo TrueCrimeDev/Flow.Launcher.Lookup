@@ -28,7 +28,8 @@ searched by `lu`, so one query covers both datasets and links.
 ```
 go                 → list every link
 go gh              → open the link aliased "gh"
-go jira ABC-123    → substitute ABC-123 into the Jira link's {q} and open it
+go ghr owner/repo  → substitute owner/repo into that link's {q} and open it
+go wage and hour   → matches no link, so it offers a Google search for those words
 lu github          → links appear beside dataset hits
 ```
 
@@ -39,6 +40,19 @@ site as well as open it. Press **Enter** to open; the context menu offers *copy 
 
 An exact or prefix match on a link's name or alias always ranks above dataset hits — a
 two-letter alias would otherwise lose to a few thousand NAICS rows.
+
+### Web search fallback
+
+Under `go`, anything that matches no link is treated as something you want to look up, so
+a search row is appended below any link matches. It is a normal `{q}` link under the
+hood, which is why the typed text is URL-encoded and the engine's favicon appears.
+
+Change the engine with `fallback_search` in `config.json` — any URL template containing
+`{q}` works — or blank it to turn the fallback off:
+
+```json
+{ "fallback_search": "https://duckduckgo.com/?q={q}" }
+```
 
 ### Editing links
 
