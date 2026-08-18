@@ -58,6 +58,12 @@ public sealed class ParsedQuery
 /// </summary>
 public static class Scorer
 {
+    // Links are pinned above every dataset tier: a two-letter alias competes against
+    // thousands of dataset rows, and the user who named a link "gh" means that link.
+    // Only names and aliases pin — a link matching by description ranks normally.
+    private const int LinkExact      = 20000;
+    private const int LinkPrefix     = 15000;
+
     private const int ExactCode      = 10000;
     private const int CodePrefix     = 9000;
     private const int ExactTitle     = 8000;
@@ -82,7 +88,10 @@ public static class Scorer
     public static int Score(SearchRecord r, ParsedQuery q)
     {
         if (q.Text.Length == 0) return 0;
-        var best = 0;
+
+        // Seeded, not returned early: a link that misses the pin still scores through
+        // the normal tiers below, exactly like any other record.
+        var best = IsLink(r) ? LinkPin(r, q) : 0;
 
         // ---- Code matches (always attempted; codes may be numeric or alphanumeric) ----
         // Code-like queries compare separator-stripped forms so "54-1511" and "541 511"
@@ -215,5 +224,27 @@ public static class Scorer
             total += termBest;
         }
         return total / terms.Length;
+    }
+
+    private static bool IsLink(SearchRecord r) =>
+        string.Equals(r.Dataset, LinkProjector.DatasetName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Pin score for a link whose name or alias the query matches exactly or by
+    /// prefix; 0 when neither, leaving the link to the ordinary tiers.</summary>
+    private static int LinkPin(SearchRecord r, ParsedQuery q)
+    {
+        if (r.TitleNorm == q.Text) return LinkExact;
+
+        foreach (var alias in r.AliasesNorm)
+            if (alias == q.Text) return LinkExact;
+
+        if (r.TitleNorm.StartsWith(q.Text, StringComparison.Ordinal))
+            return LinkPrefix + CoverageBonus(q.Text.Length, r.TitleNorm.Length);
+
+        foreach (var alias in r.AliasesNorm)
+            if (alias.StartsWith(q.Text, StringComparison.Ordinal))
+                return LinkPrefix + CoverageBonus(q.Text.Length, alias.Length);
+
+        return 0;
     }
 }
