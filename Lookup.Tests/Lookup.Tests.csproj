@@ -29,6 +29,7 @@
     <Compile Include="..\Lookup\Services\PluginConfig.cs" Link="src\PluginConfig.cs" />
     <Compile Include="..\Lookup\Services\CopyFormatter.cs" Link="src\CopyFormatter.cs" />
     <Compile Include="..\Lookup\Services\LinkStore.cs" Link="src\LinkStore.cs" />
+    <Compile Include="..\Lookup\Services\LinkProjector.cs" Link="src\LinkProjector.cs" />
   </ItemGroup>
 
 </Project>
