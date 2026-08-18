@@ -133,3 +133,17 @@ public sealed class IconResolverTests
         Assert.Equal(IconKind.Glyph, IconResolver.Resolve(Link(""), true, null).Kind);
     }
 }
+
+/// <summary>The placeholder strip shared by icon resolution and favicon cache lookups.</summary>
+public sealed class StripPlaceholderTests
+{
+    [Theory]
+    [InlineData("https://acme/browse/{q}", "https://acme/browse/")]
+    [InlineData("https://acme/{Q}/x", "https://acme//x")]
+    [InlineData("https://acme", "https://acme")]
+    [InlineData(null, "")]
+    public void StripsEveryCasingAndLeavesTheRestIntact(string? target, string expected)
+    {
+        Assert.Equal(expected, IconResolver.StripPlaceholder(target));
+    }
+}

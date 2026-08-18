@@ -46,9 +46,7 @@ public static class IconResolver
         if (icon.Length > 0 && !icon.Equals("auto", StringComparison.OrdinalIgnoreCase))
             return new IconSpec(IconKind.Image, icon);
 
-        // A parameterised target is not a real path or URL until it is filled in;
-        // strip the placeholder so the icon reflects the site or folder behind it.
-        var target = (link.Target ?? "").Replace(Placeholder, "", StringComparison.OrdinalIgnoreCase).Trim();
+        var target = StripPlaceholder(link.Target);
 
         if (target.Length == 0)
             return new IconSpec(IconKind.Glyph, LinkGlyph);
@@ -69,6 +67,12 @@ public static class IconResolver
             ? new IconSpec(IconKind.Image, target)
             : new IconSpec(IconKind.Glyph, LinkGlyph);
     }
+
+    /// <summary>A parameterised target is not a real path or URL until it is filled in;
+    /// stripping the placeholder gives the site or folder behind it, which is what both
+    /// the icon decision and the favicon cache lookup need.</summary>
+    public static string StripPlaceholder(string? target) =>
+        (target ?? "").Replace(Placeholder, "", StringComparison.OrdinalIgnoreCase).Trim();
 
     private static bool IsWebTarget(string target) =>
         target.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||

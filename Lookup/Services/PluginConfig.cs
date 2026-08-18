@@ -27,11 +27,17 @@ public sealed class PluginConfig
     /// if you rename a keyword in Flow's settings, mirror the rename here.</summary>
     public Dictionary<string, string> KeywordDatasets { get; set; } = DefaultKeywordDatasets();
 
+    /// <summary>Disables favicon fetching, restoring the plugin's fully-offline
+    /// guarantee. Links then fall back to glyphs and local target icons, both of
+    /// which need no network.</summary>
+    public bool OfflineIcons { get; set; } = false;
+
     private static Dictionary<string, string> DefaultKeywordDatasets() =>
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["na"] = "naics",
             ["zip"] = "zipcodes",
+            ["go"] = LinkProjector.DatasetName,
         };
 
     private static readonly JsonSerializerOptions SaveOptions = new(JsonDefaults.SnakeCase)

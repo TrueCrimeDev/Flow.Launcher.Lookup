@@ -1,8 +1,13 @@
 {
   "ID": "5E87D393442B4F36822AF344B7BC3C60",
-  "ActionKeywords": ["lu", "na", "zip"],
+  "ActionKeywords": [
+    "lu",
+    "na",
+    "zip",
+    "go"
+  ],
   "Name": "Lookup",
-  "Description": "Fuzzy-search local JSON lookup datasets (NAICS codes and more) from Flow Launcher.",
+  "Description": "Fuzzy-search local JSON lookup datasets and open your own links from Flow Launcher.",
   "Author": "TrueCrimeDev",
   "Version": "1.0.0",
   "Language": "csharp",

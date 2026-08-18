@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Flow.Launcher.Plugin;
 using Lookup.Models;
 using Lookup.Services;
@@ -58,6 +60,12 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
     /// the settings panel needs disabled ones too, which _index never sees.</summary>
     private List<DatasetInfo> _availableDatasets = new();
 
+    /// <summary>User links, projected into the shared index. Rebuilt on reload.</summary>
+    private List<LinkEntry> _linkEntries = new();
+    private LinkProjection _linkProjection = LinkProjector.Project(Array.Empty<LinkEntry>());
+    private List<LinkError> _linkErrors = new();
+    private FaviconCache? _favicons;
+
     public void Init(PluginInitContext context)
     {
         _context = context;
@@ -77,13 +85,37 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
             _availableDatasets = load.Datasets
                 .Select(d => new DatasetInfo(d.Dataset, d.Version, d.Items.Count))
                 .ToList();
-            _index.Build(load.Datasets, _config.EnabledDatasets);
+
+            // Links live in the settings directory, not the plugin folder: a plugin
+            // update replaces the latter and would take the user's links with it.
+            var settingsDir = _context.CurrentPluginMetadata.PluginSettingsDirectoryPath;
+            _favicons ??= new FaviconCache(settingsDir);
+            var links = LinkStore.Load(settingsDir);
+            _linkErrors = links.Errors;
+            _linkEntries = links.Links;
+            _linkProjection = LinkProjector.Project(links.Links);
+
+            var datasets = load.Datasets.Append(_linkProjection.Dataset);
+            _index.Build(datasets, EnabledDatasetsIncludingLinks());
         }
         catch (Exception ex)
         {
             _loadErrors = new List<LoadError> { new("(startup)", ex.Message) };
             _context.API.LogException(ClassName, "Failed to load lookup data", ex);
         }
+    }
+
+    /// <summary>The enabled_datasets filter is about data files; links are a user's own
+    /// entries and are never filtered out by it.</summary>
+    private List<string>? EnabledDatasetsIncludingLinks()
+    {
+        if (_config.EnabledDatasets is not { Count: > 0 } enabled)
+            return null; // null means "everything", links included
+
+        var withLinks = new List<string>(enabled);
+        if (!withLinks.Contains(LinkProjector.DatasetName, StringComparer.OrdinalIgnoreCase))
+            withLinks.Add(LinkProjector.DatasetName);
+        return withLinks;
     }
 
     /// <summary>Called by Flow's "Reload Plugin Data" command.</summary>
@@ -120,8 +152,15 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
                 return WithSearchHits(new List<Result> { ReloadCommand(kw, CommandBase(typedKw)) }, search, datasetFilter, typedKw);
         }
 
-        // ---- Empty query: show guidance ----
-        if (search.Length == 0) return HelpResults(typedKw);
+        // ---- Empty query: list the links under a links-scoped keyword, guidance elsewhere.
+        // The index needs query text to score against, so an unfiltered listing is the
+        // one case that bypasses it. ----
+        if (search.Length == 0)
+        {
+            return IsLinksScope(datasetFilter)
+                ? AllLinkResults(typedKw)
+                : HelpResults(typedKw);
+        }
 
         // ---- Hard failure: nothing loaded ----
         if (_index.Count == 0)
@@ -155,13 +194,60 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
             };
         }
 
-        return hits.Select(h => ToResult(h, typedKw)).ToList();
+        var results = hits.Select(h => ToResult(h, typedKw)).ToList();
+
+        // A parameterised link typed with a value ("jira ABC-123") is a different action
+        // from the bare link row, so it replaces that row rather than sitting beside it.
+        var match = QueryParser.Match(search, _linkEntries);
+        if (match is not null && match.Link.HasQueryPlaceholder && match.Remainder.Length > 0)
+        {
+            var matchedId = IdOf(match.Link);
+            results.RemoveAll(r => r.ContextData is LookupItem existing && existing.Id == matchedId);
+            results.Insert(0, ToLinkResult(match.Link, matchedId, CommandBase(typedKw), typedKw, match.Remainder));
+        }
+
+        return results;
+    }
+
+    /// <summary>Every link, for an empty links-scoped query.</summary>
+    private List<Result> AllLinkResults(string? typedKw)
+    {
+        if (_linkEntries.Count == 0)
+        {
+            return new List<Result>
+            {
+                Info("No links defined yet",
+                    "Add links in Flow's Settings → Plugins → Lookup, or edit links.json.")
+            };
+        }
+
+        return _linkEntries
+            .Select(link => ToLinkResult(link, IdOf(link), 0, typedKw, ""))
+            .ToList();
+    }
+
+    private bool IsLinksScope(string? datasetFilter) =>
+        string.Equals(datasetFilter, LinkProjector.DatasetName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Projected item id for a link, or "" when it did not come from the
+    /// current projection.</summary>
+    private string IdOf(LinkEntry link)
+    {
+        foreach (var (id, entry) in _linkProjection.ByItemId)
+            if (ReferenceEquals(entry, link))
+                return id;
+        return "";
     }
 
     public List<Result> LoadContextMenus(Result selectedResult)
     {
         if (selectedResult.ContextData is not LookupItem item)
             return new List<Result>();
+
+        // A link's menu is about opening and copying its target; the dataset menus below
+        // (copy code, copy NAICS description, copy JSON) would be meaningless for one.
+        if (_linkProjection.ByItemId.TryGetValue(item.Id, out var link))
+            return LinkContextMenus(link);
 
         var menus = new List<Result>();
 
@@ -228,6 +314,13 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
     private Result ToResult(ScoredRecord hit, string? typedKw)
     {
         var item = hit.Record.Item;
+
+        // Links render and act differently: Enter opens rather than copies, and the
+        // title is the link's name, not the dataset's "{code} - {title}" form.
+        if (string.Equals(hit.Record.Dataset, LinkProjector.DatasetName, StringComparison.OrdinalIgnoreCase) &&
+            _linkProjection.ByItemId.TryGetValue(item.Id, out var link))
+            return ToLinkResult(link, item.Id, hit.Score, typedKw, "");
+
         var title = CopyFormatter.CodeTitle(item);
         var subtitle = BuildSubtitle(item);
         var copyValue = CopyValue(item);
@@ -263,6 +356,124 @@ public class Main : IPlugin, IContextMenu, IReloadable, ISettingProvider
                 return true; // hide Flow after copying
             },
         };
+    }
+
+    /// <summary>Builds the row for a link. <paramref name="remainder"/> is the text typed
+    /// after the alias, substituted into a {q} target.</summary>
+    private Result ToLinkResult(LinkEntry link, string itemId, int score, string? typedKw, string remainder)
+    {
+        var needsValue = QueryParser.NeedsParameter(link, remainder);
+        var target = QueryParser.BuildTarget(link, remainder);
+
+        var subtitle = needsValue
+            ? $"Type a value after “{link.Aliases.FirstOrDefault() ?? link.Name}” to open this link"
+            : link.Description.Length > 0 && remainder.Length == 0 ? link.Description : target;
+
+        // Resolved before construction: Result.Glyph is init-only in the plugin SDK.
+        var icon = ResolveIcon(link);
+
+        var result = new Result
+        {
+            Title = link.Name,
+            SubTitle = subtitle,
+            Score = score,
+            IcoPath = icon.Kind == IconKind.Image ? icon.Value : IconPath,
+            RoundedIcon = icon.Kind == IconKind.Image && icon.Rounded,
+            Glyph = icon.Kind == IconKind.Glyph ? new GlyphInfo(IconResolver.FontFamily, icon.Value) : null,
+            TitleToolTip = link.Name,
+            SubTitleToolTip = target,
+            CopyText = target,
+            ContextData = ItemFor(itemId),
+            AutoCompleteText = JoinKeyword(typedKw, link.Aliases.FirstOrDefault() ?? link.Name),
+            Action = _ =>
+            {
+                if (needsValue)
+                {
+                    // Nothing to open yet: keep Flow open so the user can finish typing.
+                    _context.API.ShowMsg("Lookup", subtitle);
+                    return false;
+                }
+
+                return OpenTarget(target);
+            },
+        };
+
+        return result;
+    }
+
+    private List<Result> LinkContextMenus(LinkEntry link)
+    {
+        var menus = new List<Result>();
+
+        if (!link.HasQueryPlaceholder)
+            menus.Add(Menu("Open", link.Target, () => OpenTarget(link.Target)));
+
+        menus.Add(Menu("Copy target", link.Target, () => ClipboardHelper.Copy(link.Target, _context.API)));
+        menus.Add(Menu("Copy name", link.Name, () => ClipboardHelper.Copy(link.Name, _context.API)));
+
+        if (link.Aliases.Count > 0)
+        {
+            var aliases = string.Join(", ", link.Aliases);
+            menus.Add(Menu("Copy aliases", aliases, () => ClipboardHelper.Copy(aliases, _context.API)));
+        }
+
+        return menus;
+    }
+
+    /// <summary>The projected LookupItem for a link id, used as ContextData so the
+    /// context menu can find its way back to the link.</summary>
+    private LookupItem? ItemFor(string itemId) =>
+        _linkProjection.Dataset.Items.FirstOrDefault(i => i.Id == itemId);
+
+    /// <summary>Resolves a link's icon and, when it is a favicon that has not been
+    /// fetched yet, starts that fetch in the background.</summary>
+    private IconSpec ResolveIcon(LinkEntry link)
+    {
+        var cleanTarget = IconResolver.StripPlaceholder(link.Target);
+        var cached = _config.OfflineIcons ? null : _favicons?.TryGetCached(cleanTarget);
+        var spec = IconResolver.Resolve(link, !_config.OfflineIcons, cached);
+
+        if (spec.FetchUrl is { Length: > 0 } fetchUrl && _favicons is not null)
+        {
+            // Fire and forget: Query runs per keystroke and must not wait on the network.
+            // EnsureAsync absorbs its own failures and never retries a dead host.
+            _ = Task.Run(() => _favicons.EnsureAsync(fetchUrl, CancellationToken.None));
+        }
+
+        return spec;
+    }
+
+    /// <summary>Opens a link target. Returns true to let Flow hide itself.</summary>
+    private bool OpenTarget(string target)
+    {
+        try
+        {
+            if (target.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                target.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                _context.API.OpenUrl(target);
+                return true;
+            }
+
+            var expanded = Environment.ExpandEnvironmentVariables(target);
+
+            if (Directory.Exists(expanded))
+            {
+                _context.API.OpenDirectory(expanded);
+                return true;
+            }
+
+            // Files, executables and custom schemes: let the shell decide what "open" means.
+            using var process = System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo(expanded) { UseShellExecute = true });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _context.API.LogException(ClassName, $"Failed to open link target: {target}", ex);
+            _context.API.ShowMsgError("Could not open this link", ex.Message);
+            return false; // keep Flow open so the user can see what failed
+        }
     }
 
     private static string BuildSubtitle(LookupItem item)

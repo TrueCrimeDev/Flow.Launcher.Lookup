@@ -199,3 +199,31 @@ public sealed class LinkStoreTests
         Assert.False(new LinkEntry { Target = "https://x/" }.HasQueryPlaceholder);
     }
 }
+
+/// <summary>Config defaults that the links feature depends on.</summary>
+public sealed class LinkConfigTests
+{
+    [Fact]
+    public void DefaultKeywordDatasets_ScopeGoToLinks()
+    {
+        var config = new PluginConfig();
+
+        Assert.True(config.KeywordDatasets.TryGetValue("go", out var dataset));
+        Assert.Equal(LinkProjector.DatasetName, dataset);
+    }
+
+    [Fact]
+    public void DefaultKeywordDatasets_KeepTheExistingDatasetScopes()
+    {
+        var config = new PluginConfig();
+
+        Assert.Equal("naics", config.KeywordDatasets["na"]);
+        Assert.Equal("zipcodes", config.KeywordDatasets["zip"]);
+    }
+
+    [Fact]
+    public void OfflineIcons_DefaultsToOff()
+    {
+        Assert.False(new PluginConfig().OfflineIcons);
+    }
+}
